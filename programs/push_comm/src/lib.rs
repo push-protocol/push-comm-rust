@@ -131,9 +131,7 @@ pub mod push_comm {
         Ok(())
     }
 
-    pub fn subscribe(ctx: Context<Subscribe>, 
-        channel: Pubkey,
-    ) -> Result<()> {
+    pub fn subscribe(ctx: Context<Subscribe>) -> Result<()> {
         // TO-DO : add + _addUser() function logic here
         _addUser(&mut ctx.accounts.storage, &mut ctx.accounts.comm_storage)?;
         let user = &mut ctx.accounts.storage;
@@ -145,10 +143,11 @@ pub mod push_comm {
         user.user_subscribe_count += 1;
         // Mark user as subscribed for a given channel
         subscription.is_subscribed = true;
+        
 
         emit!(Subscribed {
             user: ctx.accounts.user.key(),
-            channel: channel,
+            channel: ctx.accounts.channel.key(),
         });
 
         Ok(())
@@ -174,7 +173,7 @@ pub struct Initialize <'info>{
     #[account(init,
         payer = user,
         space = size_of::<PushCommStorageV3>() + 8,
-        seeds = [],
+        seeds = [b"push_comm_storage_v3"],
         bump)]
     pub storage: Account<'info, PushCommStorageV3>,
 
@@ -254,13 +253,13 @@ pub struct DelegateNotifSenders <'info>{
 }
 
 #[derive(Accounts)]
-#[instruction(channel: Pubkey, user: Pubkey)]
+#[instruction(channel: Pubkey)]
 pub struct Subscribe<'info> {
     #[account(
         init_if_needed,
         payer = user,
         space = 8 + 1 + 8 + 8, // discriminator + bool + u64 + u64
-        seeds = [b"user_storage", user.key().as_ref(), channel.key().as_ref()],
+        seeds = [b"user_storage", user.key().as_ref()],
         bump
     )]
     pub storage: Account<'info, UserStorage>,
@@ -274,7 +273,10 @@ pub struct Subscribe<'info> {
     )]
     pub subscription: Account<'info, Subscription>,
 
-    #[account(mut)]
+    /// CHECK: This account is not read or written in this instruction
+    pub channel: AccountInfo<'info>,
+    
+    #[account(mut, seeds = [b"push_comm_storage_v3"], bump)]
     pub comm_storage: Account<'info, PushCommStorageV3>,
 
     #[account(mut)]
