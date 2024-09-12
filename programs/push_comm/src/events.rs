@@ -25,7 +25,7 @@ pub struct Subscribed{
 }
 
 #[event]
-pub struct Unsubscribe{
+pub struct Unsubscribed{
     pub user: Pubkey,
     pub channel: Pubkey,
 }

@@ -87,6 +87,7 @@ pub mod push_comm {
     pub fn verify_channel_alias(ctx: Context<AliasVerification>,
         channel_address: String
     ) -> Result<()> {
+        require!(channel_address.len() <= 64, PushCommError::InvalidArgument);
         let storage = &mut ctx.accounts.storage;
         emit!(ChannelAlias {
             chain_name: CHAIN_NAME.to_string(),
@@ -131,7 +132,7 @@ pub mod push_comm {
         Ok(())
     }
 
-    pub fn subscribe(ctx: Context<Subscribe>) -> Result<()> {
+    pub fn subscribe(ctx: Context<SubscriptionContext>) -> Result<()> {
         // TO-DO : add + _addUser() function logic here
         _addUser(&mut ctx.accounts.storage, &mut ctx.accounts.comm_storage)?;
         let user = &mut ctx.accounts.storage;
@@ -139,13 +140,35 @@ pub mod push_comm {
 
         require!(subscription.is_subscribed == false, PushCommError::AlreadySubscribed);
 
-        // Increase user subscribe count
+        // Increase user subscribe count by check overflow
         user.user_subscribe_count += 1;
         // Mark user as subscribed for a given channel
         subscription.is_subscribed = true;
         
 
         emit!(Subscribed {
+            user: ctx.accounts.user.key(),
+            channel: ctx.accounts.channel.key(),
+        });
+
+        Ok(())
+    }
+
+    pub fn unsubscribe(ctx: Context<SubscriptionContext>) -> Result<()>{
+        let user = &mut ctx.accounts.storage;
+        let subscription = &mut ctx.accounts.subscription;
+
+        require!(subscription.is_subscribed == true, PushCommError::NotSubscribed);
+
+        // Decrease user subscribe count
+        user.user_subscribe_count = user
+        .user_subscribe_count
+        .checked_sub(1)
+        .ok_or(PushCommError::Underflow)?;
+        // Mark user as unsubscribed for a given channel
+        subscription.is_subscribed = false;
+
+        emit!(Unsubscribed {
             user: ctx.accounts.user.key(),
             channel: ctx.accounts.channel.key(),
         });
@@ -254,7 +277,7 @@ pub struct DelegateNotifSenders <'info>{
 
 #[derive(Accounts)]
 #[instruction(channel: Pubkey)]
-pub struct Subscribe<'info> {
+pub struct SubscriptionContext<'info> {
     #[account(
         init_if_needed,
         payer = user,
