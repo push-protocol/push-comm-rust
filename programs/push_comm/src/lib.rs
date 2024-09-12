@@ -14,8 +14,6 @@ declare_id!("38y1vrywbkV9xNUBQ2rdi6E1PNxj2EhWgakpN3zLtneu");
 
 #[program]
 pub mod push_comm {
-    use anchor_lang::accounts::account;
-
     use super::*;
 
     pub fn initialize(ctx: Context<Initialize>, 
@@ -132,7 +130,43 @@ pub mod push_comm {
         });
         Ok(())
     }
+
+    pub fn subscribe(ctx: Context<Subscribe>, 
+        channel: Pubkey,
+    ) -> Result<()> {
+        // TO-DO : add + _addUser() function logic here
+        _addUser(&mut ctx.accounts.storage, &mut ctx.accounts.comm_storage)?;
+        let user = &mut ctx.accounts.storage;
+        let subscription = &mut ctx.accounts.subscription;
+
+        require!(subscription.is_subscribed == false, PushCommError::AlreadySubscribed);
+
+        // Increase user subscribe count
+        user.user_subscribe_count += 1;
+        // Mark user as subscribed for a given channel
+        subscription.is_subscribed = true;
+
+        emit!(Subscribed {
+            user: ctx.accounts.user.key(),
+            channel: channel,
+        });
+
+        Ok(())
+    }
     
+}
+
+/*
+* PRIVATE HELPER FUNCTIONS
+*/
+fn _addUser(user_storage: &mut Account<UserStorage>, comm_storage: &mut Account<PushCommStorageV3>) -> Result<()> {
+    if !user_storage.user_activated {
+        user_storage.user_activated = true;
+        user_storage.user_start_block = Clock::get()?.slot;
+
+        comm_storage.user_count += 1;
+    }
+    Ok(())
 }
 
 #[derive(Accounts)]
@@ -209,10 +243,39 @@ pub struct DelegateNotifSenders <'info>{
     #[account(
         init,
         payer = user,
-        space = 8 + 1, // discriminator + bool
+        space = 8 + 32 + 32 + 1, // discriminator + bool
         seeds = [b"delegate", channel.key().as_ref(), delegate.key().as_ref()],
         bump )]
     pub storage: Account<'info, DelegatedNotificationSenders>,
+
+    #[account(mut)]
+    pub user: Signer<'info>,
+    pub system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
+#[instruction(channel: Pubkey, user: Pubkey)]
+pub struct Subscribe<'info> {
+    #[account(
+        init_if_needed,
+        payer = user,
+        space = 8 + 1 + 8 + 8, // discriminator + bool + u64 + u64
+        seeds = [b"user_storage", user.key().as_ref(), channel.key().as_ref()],
+        bump
+    )]
+    pub storage: Account<'info, UserStorage>,
+
+    #[account(
+        init_if_needed,
+        payer = user,
+        space = 8 + 1, // discriminator + bool
+        seeds = [b"is_subscribed", user.key().as_ref(), channel.key().as_ref()],
+        bump
+    )]
+    pub subscription: Account<'info, Subscription>,
+
+    #[account(mut)]
+    pub comm_storage: Account<'info, PushCommStorageV3>,
 
     #[account(mut)]
     pub user: Signer<'info>,

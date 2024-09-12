@@ -19,7 +19,7 @@ pub struct RemoveDelegate{
 }
 
 #[event]
-pub struct Subscribe{
+pub struct Subscribed{
     pub user: Pubkey,
     pub channel: Pubkey,
 }

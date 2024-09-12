@@ -15,7 +15,7 @@ pub struct PushCommStorageV3 {
     pub push_channel_admin: Pubkey,
     pub chain_id: u64,
     pub user_count: u64,
-    pub is_migration_complete: bool,
+    pub is_migration_complete: bool, // @audit - Might be removed
     pub push_core_address: Pubkey,
     pub push_token_ntt: Pubkey,
     pub paused: bool,
@@ -24,30 +24,19 @@ pub struct PushCommStorageV3 {
 #[account]
 pub struct UserStorage{
     pub user_activated: bool,
-    pub user_key_registered: bool,
     pub user_start_block: u64,
     pub user_subscribe_count: u64,
 }
 // UserStorage-Specific Mappings
 #[account]
-pub struct IsSubscribed {
-    pub user: Pubkey,    // User public key
-    pub channel: Pubkey, // Channel public key
-    pub is_subscribed: u8, // 1 -> Subscribed, 0 -> Not subscribed
+pub struct Subscription{
+    pub is_subscribed: bool,
 }
 
 #[account]
-pub struct Subscribed {
-    pub user: Pubkey,
+pub struct ChannelSubscribers {
     pub channel: Pubkey,
-    pub subscription_data: u64, // Subscription data
-}
-
-#[account]
-pub struct MapAddressSubscribed {
-    pub user: Pubkey,
-    pub index: u64, // Index of the subscription
-    pub channel: Pubkey, // Subscribed channel public key
+    pub subscriber_count: u64,
 }
 // Additional Key-Value Maps
 #[account]
