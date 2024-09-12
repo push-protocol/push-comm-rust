@@ -2,8 +2,13 @@ use anchor_lang::prelude::*;
 use core::mem::size_of;
 
 //import custom files
-mod state;
+pub mod state;
+pub mod errors;
+pub mod events;
+
 use crate::state::*;
+use crate::errors::*;
+use crate::events::*;
 
 declare_id!("38y1vrywbkV9xNUBQ2rdi6E1PNxj2EhWgakpN3zLtneu");
 
@@ -212,38 +217,4 @@ pub struct DelegateNotifSenders <'info>{
     #[account(mut)]
     pub user: Signer<'info>,
     pub system_program: Program<'info, System>,
-}
-
-// Error Handling
-#[error_code]
-pub enum PushCommError {
-    #[msg("Unauthorized access")]
-    Unauthorized,
-    #[msg("Invalid argument provided")]
-    InvalidArgument,
-    #[msg("Arithmetic operation failed")]
-    ArithmeticError,
-    #[msg("Program is currently paused")]
-    AlreadyPaused,
-    #[msg("Program is not paused")]
-    NotPaused,
-    // Add more errors as needed
-}
-
-// Events
-#[event]
-pub struct ChannelAlias{
-    pub chain_name: String,
-    pub chain_id: u64,
-    pub channel_address: String,
-}
-#[event]
-pub struct AddDelegate{
-    pub channel: Pubkey,
-    pub delegate: Pubkey,
-}
-#[event]
-pub struct RemoveDelegate{
-    pub channel: Pubkey,
-    pub delegate: Pubkey,
 }
