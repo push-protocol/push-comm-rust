@@ -98,18 +98,17 @@ pub mod push_comm {
     }
 
     pub fn add_delegate(ctx: Context<DelegateNotifSenders>,
-        channel: Pubkey,
         delegate: Pubkey
     ) -> Result<()>{
         // TO-DO :added _subscribe() function here
         let storage = &mut ctx.accounts.storage;
         
-        storage.channel = channel;
+        storage.channel = ctx.accounts.user.key();
         storage.delegate = delegate;
         storage.is_delegate = true;
         
         emit!(AddDelegate {
-            channel: ctx.accounts.storage.channel,
+            channel: ctx.accounts.user.key(),
             delegate: ctx.accounts.storage.delegate,
         });
         Ok(())
@@ -260,13 +259,13 @@ pub struct AliasVerification <'info > {
 }
 
 #[derive(Accounts)]
-#[instruction(channel: Pubkey, delegate: Pubkey)]
+#[instruction(delegate: Pubkey)]
 pub struct DelegateNotifSenders <'info>{
     #[account(
         init,
         payer = user,
         space = 8 + 32 + 32 + 1, // discriminator + channel + delegate + bool
-        seeds = [b"delegate", channel.key().as_ref(), delegate.key().as_ref()],
+        seeds = [b"delegate", user.key().as_ref(), delegate.key().as_ref()],
         bump )]
     pub storage: Account<'info, DelegatedNotificationSenders>,
 
