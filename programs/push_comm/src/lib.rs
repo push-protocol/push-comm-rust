@@ -115,17 +115,16 @@ pub mod push_comm {
     }
 
     pub fn remove_delegate(ctx: Context<DelegateNotifSenders>,
-        channel: Pubkey,
         delegate: Pubkey
     ) -> Result<()>{
         let storage = &mut ctx.accounts.storage;
 
-        storage.channel = channel;
+        storage.channel = ctx.accounts.user.key();
         storage.delegate = delegate;
         storage.is_delegate = false;
 
         emit!(RemoveDelegate {
-            channel: ctx.accounts.storage.channel,
+            channel: ctx.accounts.user.key(),
             delegate: ctx.accounts.storage.delegate,
         });
         Ok(())
