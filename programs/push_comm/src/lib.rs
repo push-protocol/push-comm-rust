@@ -208,7 +208,7 @@ pub struct Initialize <'info>{
 // ADMIN-SPECIFIC-CONTEXTS
 #[derive(Accounts)]
 pub struct SetCoreAddress <'info> {
-    #[account(mut, has_one = push_channel_admin @ PushCommError::Unauthorized)]
+    #[account(mut, seeds = [b"push_comm_storage_v3"], bump, has_one = push_channel_admin @ PushCommError::Unauthorized)]
     pub storage: Account<'info, PushCommStorageV3>,
 
     #[account(signer)]
@@ -217,7 +217,7 @@ pub struct SetCoreAddress <'info> {
 
 #[derive(Accounts)]
 pub struct SetGovernanceAddress <'info> {
-    #[account(mut, has_one = governance @ PushCommError::Unauthorized)]
+    #[account(mut, seeds = [b"push_comm_storage_v3"], bump, has_one = governance @ PushCommError::Unauthorized)]
     pub storage: Account<'info, PushCommStorageV3>,
 
     #[account(signer)]
@@ -227,7 +227,7 @@ pub struct SetGovernanceAddress <'info> {
 
 #[derive(Accounts)]
 pub struct SetPushTokenAddress <'info> {
-    #[account(mut, has_one = push_channel_admin @ PushCommError::Unauthorized)]
+    #[account(mut, seeds = [b"push_comm_storage_v3"], bump, has_one = push_channel_admin @ PushCommError::Unauthorized)]
     pub storage: Account<'info, PushCommStorageV3>,
 
     #[account(signer)]
@@ -236,7 +236,7 @@ pub struct SetPushTokenAddress <'info> {
 
 #[derive(Accounts)]
 pub struct Pausability<'info > {
-    #[account(mut, has_one = push_channel_admin @ PushCommError::Unauthorized)]
+    #[account(mut, seeds = [b"push_comm_storage_v3"], bump, has_one = push_channel_admin @ PushCommError::Unauthorized)]
     pub storage: Account<'info, PushCommStorageV3>,
 
     #[account(signer)]
@@ -245,7 +245,7 @@ pub struct Pausability<'info > {
 
 #[derive(Accounts)]
 pub struct OwnershipTransfer<'info> {
-    #[account(mut, has_one = push_channel_admin @ PushCommError::Unauthorized)]
+    #[account(mut, seeds = [b"push_comm_storage_v3"], bump, has_one = push_channel_admin @ PushCommError::Unauthorized)]
     pub storage: Account<'info, PushCommStorageV3>,
 
     #[account(signer)]
@@ -255,7 +255,7 @@ pub struct OwnershipTransfer<'info> {
 // PUBLIC-CONTEXTS
 #[derive(Accounts)]
 pub struct AliasVerification <'info > {
-    #[account(mut)]
+    #[account(seeds = [b"push_comm_storage_v3"], bump)]
     pub storage: Account<'info, PushCommStorageV3>
 }
 
@@ -265,7 +265,7 @@ pub struct DelegateNotifSenders <'info>{
     #[account(
         init,
         payer = user,
-        space = 8 + 32 + 32 + 1, // discriminator + bool
+        space = 8 + 32 + 32 + 1, // discriminator + channel + delegate + bool
         seeds = [b"delegate", channel.key().as_ref(), delegate.key().as_ref()],
         bump )]
     pub storage: Account<'info, DelegatedNotificationSenders>,
