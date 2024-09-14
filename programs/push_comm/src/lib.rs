@@ -179,11 +179,15 @@ pub mod push_comm {
         recipient: Pubkey,
         message: Vec<u8>,
     ) -> Result<()> {
-        let req =  _check_notif_req(&ctx.accounts.delegate_storage, &ctx.accounts.user);
+        let sender: &Signer<'_> = &ctx.accounts.sender;
+        let delegate_storage = &ctx.accounts.delegate_storage;
 
-        if req {
+        let is_authorized = (delegate_storage.channel == sender.key()) || 
+            (delegate_storage.delegate == sender.key() && delegate_storage.is_delegate);
+
+        if is_authorized {
             emit!(SendNotification {
-                channel: ctx.accounts.user.key(),
+                channel: delegate_storage.channel,
                 recipient: recipient,
                 message: message,
             });
@@ -197,9 +201,6 @@ pub mod push_comm {
 /*
 * PRIVATE HELPER FUNCTIONS
 */
-fn _check_notif_req(channel: &Account<DelegatedNotificationSenders>, user: &Signer) -> bool {
-    (channel.channel == user.key()) || channel.is_delegate
-}
 fn _add_user(user_storage: &mut Account<UserStorage>, comm_storage: &mut Account<PushCommStorageV3>) -> Result<()> {
     if !user_storage.user_activated {
         user_storage.user_activated = true;
@@ -327,11 +328,12 @@ pub struct SubscriptionContext<'info> {
 }
 
 #[derive(Accounts)]
+#[instruction(channel: Pubkey, delegate: Pubkey)]
 pub struct SendNotificationCTX<'info> {
-    #[account(seeds = [b"delegate", user.key().as_ref(), delegate_storage.delegate.as_ref()], bump)]
+    #[account(seeds = [b"delegate", channel.key().as_ref(), delegate.key().as_ref()], bump)]
     pub delegate_storage: Account<'info, DelegatedNotificationSenders>,
 
     #[account(mut)]
-    pub user: Signer<'info>,
+    pub sender: Signer<'info>,
     pub system_program: Program<'info, System>,
 }

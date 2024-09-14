@@ -39,8 +39,8 @@ pub struct SendNotification{
 
 #[event]
 pub struct UserNotifcationSettingsAdded{
-    pub user: Pubkey,
     pub channel: Pubkey,
+    pub user: Pubkey,
     pub notif_id: u64,
     pub notif_settings : String,
 }
