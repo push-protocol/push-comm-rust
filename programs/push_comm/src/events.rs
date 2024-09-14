@@ -19,13 +19,13 @@ pub struct RemoveDelegate{
 }
 
 #[event]
-pub struct Subscribe{
+pub struct Subscribed{
     pub user: Pubkey,
     pub channel: Pubkey,
 }
 
 #[event]
-pub struct Unsubscribe{
+pub struct Unsubscribed{
     pub user: Pubkey,
     pub channel: Pubkey,
 }
@@ -34,7 +34,7 @@ pub struct Unsubscribe{
 pub struct SendNotification{
     pub channel: Pubkey,
     pub recipient: Pubkey,
-    pub identity: Vec<u8>,
+    pub message: Vec<u8>,
 }
 
 #[event]

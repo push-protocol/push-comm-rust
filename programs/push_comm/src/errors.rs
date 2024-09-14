@@ -13,5 +13,13 @@ pub enum PushCommError {
     NotPaused,
     #[msg("Invalid Signature Parameters")]
     InvalidSignature,
+    #[msg("Already Subscribed to this channel")]
+    AlreadySubscribed,
+    #[msg("Not Subscribed to this channel")]
+    NotSubscribed,
+    #[msg("Underflow Error")]
+    Underflow,
+    #[msg("Overflow Error")]
+    Overflow,
     // Add more errors as needed
 }
