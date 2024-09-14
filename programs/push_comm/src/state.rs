@@ -5,6 +5,7 @@ declare_id!("38y1vrywbkV9xNUBQ2rdi6E1PNxj2EhWgakpN3zLtneu");
 // Constant States
 pub const NAME: &str = "Push Comm V3"; // Check if this is actually needed
 pub const CHAIN_NAME: &str = "Solana Mainnet"; 
+pub const MAX_NOTIF_SETTINGS_LENGTH: usize = 100; // Adjust as needed
 
 // STATES of PushComm Program
 
@@ -39,4 +40,11 @@ pub struct DelegatedNotificationSenders{
     pub channel: Pubkey,
     pub delegate: Pubkey,
     pub is_delegate: bool,
+}
+
+#[account]
+pub struct UserNotificationSettings{
+    pub channel: Pubkey,
+    pub user: Pubkey,
+    pub notif_settings: String,
 }

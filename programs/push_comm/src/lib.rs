@@ -195,6 +195,32 @@ pub mod push_comm {
 
         Ok(())
     }
+
+    pub fn set_user_notification_settings(ctx: Context<UserChannelSettings>,
+        notif_id: u64,
+        notif_settings: String
+    ) -> Result<()> {
+        let subscription = &ctx.accounts.subscription;
+        let storage = &mut ctx.accounts.storage;
+        
+        require!(
+            notif_settings.len() <= MAX_NOTIF_SETTINGS_LENGTH,
+            PushCommError::InvalidArgument
+        );    
+        require!(subscription.is_subscribed == true, PushCommError::NotSubscribed);
+
+        let notif_setting_data = format!("{}+{}", notif_id.to_string(), notif_settings);
+        storage.notif_settings = notif_setting_data.clone();
+
+        emit!(UserNotifcationSettingsAdded {
+            channel: ctx.accounts.channel.key(),
+            user: ctx.accounts.storage.user,
+            notif_id: notif_id,
+            notif_settings: notif_setting_data,
+        });
+
+        Ok(())
+    }
     
 }
 
@@ -335,5 +361,28 @@ pub struct SendNotificationCTX<'info> {
 
     #[account(mut)]
     pub sender: Signer<'info>,
+    pub system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
+#[instruction(channel: Pubkey)]
+pub struct UserChannelSettings<'info> {
+    #[account(
+        init_if_needed,
+        payer = user,
+        space = 8 + 32 + 32 + 32, // discriminator + channel + user + notif_settings
+        seeds = [b"user_notif_settings", user.key().as_ref(), channel.key().as_ref()],
+        bump
+    )]
+    pub storage: Account<'info, UserNotificationSettings>,
+
+    #[account(seeds = [b"is_subscribed", user.key().as_ref(), channel.key().as_ref()], bump)]
+    pub subscription: Account<'info, Subscription>,
+
+    /// CHECK: This account is not read or written in this instruction
+    pub channel: AccountInfo<'info>,
+
+    #[account(mut)]
+    pub user: Signer<'info>,
     pub system_program: Program<'info, System>,
 }
