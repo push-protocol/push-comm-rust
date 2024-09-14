@@ -33,11 +33,6 @@ pub struct Subscription{
     pub is_subscribed: bool,
 }
 
-#[account]
-pub struct ChannelSubscribers {
-    pub channel: Pubkey,
-    pub subscriber_count: u64,
-}
 // Additional Key-Value Maps
 #[account]
 pub struct DelegatedNotificationSenders{

@@ -1,4 +1,5 @@
 use anchor_lang::prelude::*;
+use borsh::de;
 use core::mem::size_of;
 
 //import custom files
@@ -132,7 +133,7 @@ pub mod push_comm {
 
     pub fn subscribe(ctx: Context<SubscriptionContext>) -> Result<()> {
         // TO-DO : add + _addUser() function logic here
-        _addUser(&mut ctx.accounts.storage, &mut ctx.accounts.comm_storage)?;
+        _add_user(&mut ctx.accounts.storage, &mut ctx.accounts.comm_storage)?;
         let user = &mut ctx.accounts.storage;
         let subscription = &mut ctx.accounts.subscription;
 
@@ -173,13 +174,33 @@ pub mod push_comm {
 
         Ok(())
     }
+
+    pub fn send_notification(ctx: Context<SendNotificationCTX>,
+        recipient: Pubkey,
+        message: Vec<u8>,
+    ) -> Result<()> {
+        let req =  _check_notif_req(&ctx.accounts.delegate_storage, &ctx.accounts.user);
+
+        if req {
+            emit!(SendNotification {
+                channel: ctx.accounts.user.key(),
+                recipient: recipient,
+                message: message,
+            });
+        }
+
+        Ok(())
+    }
     
 }
 
 /*
 * PRIVATE HELPER FUNCTIONS
 */
-fn _addUser(user_storage: &mut Account<UserStorage>, comm_storage: &mut Account<PushCommStorageV3>) -> Result<()> {
+fn _check_notif_req(channel: &Account<DelegatedNotificationSenders>, user: &Signer) -> bool {
+    (channel.channel == user.key()) || channel.is_delegate
+}
+fn _add_user(user_storage: &mut Account<UserStorage>, comm_storage: &mut Account<PushCommStorageV3>) -> Result<()> {
     if !user_storage.user_activated {
         user_storage.user_activated = true;
         user_storage.user_start_block = Clock::get()?.slot;
@@ -299,6 +320,16 @@ pub struct SubscriptionContext<'info> {
     
     #[account(mut, seeds = [b"push_comm_storage_v3"], bump)]
     pub comm_storage: Account<'info, PushCommStorageV3>,
+
+    #[account(mut)]
+    pub user: Signer<'info>,
+    pub system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
+pub struct SendNotificationCTX<'info> {
+    #[account(seeds = [b"delegate", user.key().as_ref(), delegate_storage.delegate.as_ref()], bump)]
+    pub delegate_storage: Account<'info, DelegatedNotificationSenders>,
 
     #[account(mut)]
     pub user: Signer<'info>,

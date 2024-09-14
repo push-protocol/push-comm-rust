@@ -34,7 +34,7 @@ pub struct Unsubscribed{
 pub struct SendNotification{
     pub channel: Pubkey,
     pub recipient: Pubkey,
-    pub identity: Vec<u8>,
+    pub message: Vec<u8>,
 }
 
 #[event]
