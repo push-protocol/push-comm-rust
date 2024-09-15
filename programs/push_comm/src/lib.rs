@@ -31,7 +31,7 @@ pub mod push_comm {
 /**
  * ADMIN FUNCTIONS
  */
-    pub fn set_core_address(ctx: Context<SetCoreAddress>, 
+    pub fn set_core_address(ctx: Context<AdminStorageUpdateCTX>, 
         push_core_address: Pubkey,
         ) -> Result <()> {
             let storage = &mut ctx.accounts.storage;
@@ -39,7 +39,7 @@ pub mod push_comm {
             Ok(())
         }
     
-    pub fn set_governance_address(ctx: Context<SetGovernanceAddress>,
+    pub fn set_governance_address(ctx: Context<AdminStorageUpdateCTX>,
         governance: Pubkey,
     ) -> Result<()> {
         let storage = &mut ctx.accounts.storage;
@@ -47,7 +47,7 @@ pub mod push_comm {
         Ok(())
     }
 
-    pub fn set_push_token_address(ctx: Context<SetPushTokenAddress>,
+    pub fn set_push_token_address(ctx: Context<AdminStorageUpdateCTX>,
         token_address: Pubkey,
     ) -> Result<()> {
         let storage = &mut ctx.accounts.storage;
@@ -55,7 +55,7 @@ pub mod push_comm {
         Ok(())
     }
 
-    pub fn pause_contract(ctx: Context<Pausability>,
+    pub fn pause_contract(ctx: Context<AdminStorageUpdateCTX>,
     ) -> Result<()>{
         let storage = &mut ctx.accounts.storage;
         require!(storage.paused == false, PushCommError::AlreadyPaused);
@@ -63,7 +63,7 @@ pub mod push_comm {
         Ok(())
     }
 
-    pub fn unpause_contract(ctx: Context<Pausability>,
+    pub fn unpause_contract(ctx: Context<AdminStorageUpdateCTX>,
     ) -> Result<()>{
         let storage = &mut ctx.accounts.storage;
         require!(storage.paused == true, PushCommError::NotPaused);
@@ -72,7 +72,7 @@ pub mod push_comm {
         Ok(())
     }
 
-    pub fn transfer_admin_ownership(ctx: Context<OwnershipTransfer>,
+    pub fn transfer_admin_ownership(ctx: Context<AdminStorageUpdateCTX>,
         new_owner: Pubkey
     ) -> Result<()>{
         let storage = &mut ctx.accounts.storage;
@@ -85,7 +85,7 @@ pub mod push_comm {
 /**
  * PUBLIC FUNCTIONS
  */
-    pub fn verify_channel_alias(ctx: Context<AliasVerification>,
+    pub fn verify_channel_alias(ctx: Context<AliasVerificationCTX>,
         channel_address: String
     ) -> Result<()> {
         require!(channel_address.len() <= 64, PushCommError::InvalidArgument);
@@ -131,7 +131,7 @@ pub mod push_comm {
         Ok(())
     }
 
-    pub fn subscribe(ctx: Context<SubscriptionContext>) -> Result<()> {
+    pub fn subscribe(ctx: Context<SubscriptionCTX>) -> Result<()> {
         // TO-DO : add + _addUser() function logic here
         _add_user(&mut ctx.accounts.storage, &mut ctx.accounts.comm_storage)?;
         let user = &mut ctx.accounts.storage;
@@ -153,7 +153,7 @@ pub mod push_comm {
         Ok(())
     }
 
-    pub fn unsubscribe(ctx: Context<SubscriptionContext>) -> Result<()>{
+    pub fn unsubscribe(ctx: Context<SubscriptionCTX>) -> Result<()>{
         let user = &mut ctx.accounts.storage;
         let subscription = &mut ctx.accounts.subscription;
 
@@ -196,7 +196,7 @@ pub mod push_comm {
         Ok(())
     }
 
-    pub fn set_user_notification_settings(ctx: Context<UserChannelSettings>,
+    pub fn set_user_notification_settings(ctx: Context<UserChannelSettingsCTX>,
         notif_id: u64,
         notif_settings: String
     ) -> Result<()> {
@@ -251,56 +251,19 @@ pub struct Initialize <'info>{
     pub system_program: Program<'info, System>,
 }
 
-// ADMIN-SPECIFIC-CONTEXTS
+// ADMIN-SPECIFIC-CONTEXT
 #[derive(Accounts)]
-pub struct SetCoreAddress <'info> {
+pub struct AdminStorageUpdateCTX<'info> {
     #[account(mut, seeds = [b"push_comm_storage_v3"], bump, has_one = push_channel_admin @ PushCommError::Unauthorized)]
     pub storage: Account<'info, PushCommStorageV3>,
 
     #[account(signer)]
     pub push_channel_admin: Signer<'info>,
-}
-
-#[derive(Accounts)]
-pub struct SetGovernanceAddress <'info> {
-    #[account(mut, seeds = [b"push_comm_storage_v3"], bump, has_one = governance @ PushCommError::Unauthorized)]
-    pub storage: Account<'info, PushCommStorageV3>,
-
-    #[account(signer)]
-    pub governance: Signer<'info>,
-
-}
-
-#[derive(Accounts)]
-pub struct SetPushTokenAddress <'info> {
-    #[account(mut, seeds = [b"push_comm_storage_v3"], bump, has_one = push_channel_admin @ PushCommError::Unauthorized)]
-    pub storage: Account<'info, PushCommStorageV3>,
-
-    #[account(signer)]
-    pub push_channel_admin: Signer<'info>,
-}
-
-#[derive(Accounts)]
-pub struct Pausability<'info > {
-    #[account(mut, seeds = [b"push_comm_storage_v3"], bump, has_one = push_channel_admin @ PushCommError::Unauthorized)]
-    pub storage: Account<'info, PushCommStorageV3>,
-
-    #[account(signer)]
-    pub push_channel_admin : Signer<'info>,
-}
-
-#[derive(Accounts)]
-pub struct OwnershipTransfer<'info> {
-    #[account(mut, seeds = [b"push_comm_storage_v3"], bump, has_one = push_channel_admin @ PushCommError::Unauthorized)]
-    pub storage: Account<'info, PushCommStorageV3>,
-
-    #[account(signer)]
-    pub push_channel_admin : Signer<'info>,
 }
 
 // PUBLIC-CONTEXTS
 #[derive(Accounts)]
-pub struct AliasVerification <'info > {
+pub struct AliasVerificationCTX <'info > {
     #[account(seeds = [b"push_comm_storage_v3"], bump)]
     pub storage: Account<'info, PushCommStorageV3>
 }
@@ -323,7 +286,7 @@ pub struct DelegateNotifSenders <'info>{
 
 #[derive(Accounts)]
 #[instruction(channel: Pubkey)]
-pub struct SubscriptionContext<'info> {
+pub struct SubscriptionCTX<'info> {
     #[account(
         init_if_needed,
         payer = user,
@@ -366,7 +329,7 @@ pub struct SendNotificationCTX<'info> {
 
 #[derive(Accounts)]
 #[instruction(channel: Pubkey)]
-pub struct UserChannelSettings<'info> {
+pub struct UserChannelSettingsCTX<'info> {
     #[account(
         init_if_needed,
         payer = user,
