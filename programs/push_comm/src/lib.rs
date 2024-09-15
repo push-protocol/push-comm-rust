@@ -333,7 +333,7 @@ pub struct UserChannelSettingsCTX<'info> {
     #[account(
         init_if_needed,
         payer = signer,
-        space = 8 + 32 + 32 + 32, // discriminator + channel + user + notif_settings
+        space = 8 + 32 + 32 + 4 + MAX_NOTIF_SETTINGS_LENGTH, // discriminator + channel + user + notif_settings STRING
         seeds = [b"user_notif_settings", signer.key().as_ref(), channel.key().as_ref()],
         bump
     )]
