@@ -1,7 +1,5 @@
 use anchor_lang::prelude::*;
 
-declare_id!("38y1vrywbkV9xNUBQ2rdi6E1PNxj2EhWgakpN3zLtneu");
-
 // Constant States
 pub const NAME: &str = "Push Comm V3"; // Check if this is actually needed
 pub const CHAIN_NAME: &str = "Solana Mainnet"; 
