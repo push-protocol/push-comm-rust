@@ -11,6 +11,8 @@ pub enum PushCommError {
     AlreadyPaused,
     #[msg("Program is not paused")]
     NotPaused,
+    #[msg("Contract is Paused")]
+    ContractPaused,
     #[msg("Invalid Signature Parameters")]
     InvalidSignature,
     #[msg("Already Subscribed to this channel")]
