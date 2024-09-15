@@ -76,7 +76,8 @@ pub mod push_comm {
         new_owner: Pubkey
     ) -> Result<()>{
         let storage = &mut ctx.accounts.storage;
-
+        require!(!storage.paused, PushCommError::ContractPaused);
+        
         storage.push_channel_admin = new_owner;
         Ok(())
     }
@@ -89,7 +90,10 @@ pub mod push_comm {
         channel_address: String
     ) -> Result<()> {
         require!(channel_address.len() <= 64, PushCommError::InvalidArgument);
+
         let storage = &mut ctx.accounts.storage;
+        require!(!storage.paused, PushCommError::ContractPaused);
+
         emit!(ChannelAlias {
             chain_name: CHAIN_NAME.to_string(),
             chain_id: storage.chain_id,
@@ -103,7 +107,7 @@ pub mod push_comm {
     ) -> Result<()>{
         // TO-DO :added _subscribe() function here
         let storage = &mut ctx.accounts.storage;
-        
+
         storage.channel = ctx.accounts.signer.key();
         storage.delegate = delegate;
         storage.is_delegate = true;
@@ -272,7 +276,7 @@ pub struct AliasVerificationCTX <'info > {
 #[instruction(delegate: Pubkey)]
 pub struct DelegateNotifSenders <'info>{
     #[account(
-        init,
+        init_if_needed,
         payer = signer,
         space = 8 + 32 + 32 + 1, // discriminator + channel + delegate + bool
         seeds = [b"delegate", signer.key().as_ref(), delegate.key().as_ref()],
