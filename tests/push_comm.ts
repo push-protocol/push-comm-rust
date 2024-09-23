@@ -1,31 +1,33 @@
 import * as anchor from "@coral-xyz/anchor";
 import { Program } from "@coral-xyz/anchor";
 import { PushComm } from "../target/types/push_comm";
-import { SEEDS } from './utils';
+import { SEEDS, fundAccount } from './utils';
 
 import { expect } from "chai";
 
 
 describe("push_comm", () => {
+  const provider = anchor.AnchorProvider.env(); // Get the provider for accessing the wallet
   // Configure the client to use the local cluster.
   anchor.setProvider(anchor.AnchorProvider.env());
 
   const program = anchor.workspace.PushComm as Program<PushComm>;
   const pushAdmin = anchor.web3.Keypair.generate(); // Generate a new pushAdmin account
-  // Seeds
+  let user1 =  anchor.web3.Keypair.generate();
+  let user2 = anchor.web3.Keypair.generate();
+
+  before(async () => {
+    // Fund all accounts at once
+    await Promise.all([
+      fundAccount(provider.connection, pushAdmin.publicKey, 10 * anchor.web3.LAMPORTS_PER_SOL),
+      fundAccount(provider.connection, user1.publicKey, 5 * anchor.web3.LAMPORTS_PER_SOL),
+      fundAccount(provider.connection, user2.publicKey, 5 * anchor.web3.LAMPORTS_PER_SOL)
+    ]);
+  });
 
   it("Is initialized!", async () => {
-    const provider = anchor.AnchorProvider.env(); // Get the provider for accessing the wallet
 
     const [storage, bump] = await anchor.web3.PublicKey.findProgramAddressSync([SEEDS.PUSH_COMM_STORAGE], program.programId);
-    // Funding the pushAdmin account
-    const airdropAmount = 10 * anchor.web3.LAMPORTS_PER_SOL; // 10 SOL
-    const airdropSignature = await provider.connection.requestAirdrop(
-      pushAdmin.publicKey,
-      airdropAmount
-    );
-    await provider.connection.confirmTransaction(airdropSignature, "confirmed");
-
     const chainId = new anchor.BN(1);
     const tx = await program.methods.initialize(
       pushAdmin.publicKey,
@@ -46,4 +48,11 @@ describe("push_comm", () => {
     expect(accountData.pushChannelAdmin.toString()).to.eq(pushAdmin.publicKey.toString());
 
   });
+
+  // // Admin function tests
+  // it("set core address", async () => {
+
+  // });
+
+
 });
