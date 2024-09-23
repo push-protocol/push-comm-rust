@@ -11,6 +11,22 @@ export const SEEDS = {
     // ... other seeds
   };
 
+  // ERROR for TESTS
+  // tests/utils/errors.ts
+
+export enum ERRORS {
+  Unauthorized = "Unauthorized access",
+  InvalidArgument = "Invalid argument provided",
+  AlreadyPaused = "Program is already paused",
+  NotPaused = "Program is not paused",
+  ContractPaused = "Contract is Paused",
+  InvalidSignature = "Invalid Signature Parameters",
+  AlreadySubscribed = "Already Subscribed to this channel",
+  NotSubscribed = "Not Subscribed to this channel",
+  Underflow = "Underflow Error",
+  Overflow = "Overflow Error",
+}
+
   export async function fundAccount(connection: anchor.web3.Connection, account: anchor.web3.PublicKey, amount: number) {
     const airdropSignature = await connection.requestAirdrop(
       account,
