@@ -10,12 +10,13 @@ describe("push_comm", () => {
 
   const program = anchor.workspace.PushComm as Program<PushComm>;
   const pushAdmin = anchor.web3.Keypair.generate(); // Generate a new pushAdmin account
+  // Seeds
+  const PUSH_COMM_STORAGE = Buffer.from("push_comm_storage_v3");
 
   it("Is initialized!", async () => {
     const provider = anchor.AnchorProvider.env(); // Get the provider for accessing the wallet
 
-    const seeds = [];
-    const [storage, bump] = await anchor.web3.PublicKey.findProgramAddressSync(seeds, program.programId);
+    const [storage, bump] = await anchor.web3.PublicKey.findProgramAddressSync([PUSH_COMM_STORAGE], program.programId);
     // Funding the pushAdmin account
     const airdropAmount = 10 * anchor.web3.LAMPORTS_PER_SOL; // 10 SOL
     const airdropSignature = await provider.connection.requestAirdrop(
@@ -30,7 +31,7 @@ describe("push_comm", () => {
       chainId,
     ).accounts({
       storage: storage,
-      user: pushAdmin.publicKey,
+      signer: pushAdmin.publicKey,
       systemProgram: anchor.web3.SystemProgram.programId,
     }).signers([pushAdmin]).rpc();
     // Add your test here.

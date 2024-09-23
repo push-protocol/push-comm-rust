@@ -77,7 +77,7 @@ pub mod push_comm {
     ) -> Result<()>{
         let storage = &mut ctx.accounts.storage;
         require!(!storage.paused, PushCommError::ContractPaused);
-        
+
         storage.push_channel_admin = new_owner;
         Ok(())
     }
@@ -243,10 +243,11 @@ fn _add_user(user_storage: &mut Account<UserStorage>, comm_storage: &mut Account
 
 #[derive(Accounts)]
 pub struct InitializeCTX<'info>{
-    #[account(init,
+    #[account(
+        init,
         payer = signer,
         space = size_of::<PushCommStorageV3>() + 8,
-        seeds = [b"push_comm_storage_v3"],
+        seeds = [PUSH_COMM_STORAGE],
         bump)]
     pub storage: Account<'info, PushCommStorageV3>,
 
@@ -258,7 +259,7 @@ pub struct InitializeCTX<'info>{
 // ADMIN-SPECIFIC-CONTEXT
 #[derive(Accounts)]
 pub struct AdminStorageUpdateCTX<'info> {
-    #[account(mut, seeds = [b"push_comm_storage_v3"], bump, has_one = push_channel_admin @ PushCommError::Unauthorized)]
+    #[account(mut, seeds = [PUSH_COMM_STORAGE], bump, has_one = push_channel_admin @ PushCommError::Unauthorized)]
     pub storage: Account<'info, PushCommStorageV3>,
 
     #[account(signer)]
@@ -268,7 +269,7 @@ pub struct AdminStorageUpdateCTX<'info> {
 // PUBLIC-CONTEXTS
 #[derive(Accounts)]
 pub struct AliasVerificationCTX <'info > {
-    #[account(seeds = [b"push_comm_storage_v3"], bump)]
+    #[account(seeds = [PUSH_COMM_STORAGE], bump)]
     pub storage: Account<'info, PushCommStorageV3>
 }
 
@@ -276,10 +277,10 @@ pub struct AliasVerificationCTX <'info > {
 #[instruction(delegate: Pubkey)]
 pub struct DelegateNotifSenders <'info>{
     #[account(
-        init_if_needed,
+        init,
         payer = signer,
         space = 8 + 32 + 32 + 1, // discriminator + channel + delegate + bool
-        seeds = [b"delegate", signer.key().as_ref(), delegate.key().as_ref()],
+        seeds = [DELEGATE, signer.key().as_ref(), delegate.key().as_ref()],
         bump )]
     pub storage: Account<'info, DelegatedNotificationSenders>,
 
@@ -292,19 +293,19 @@ pub struct DelegateNotifSenders <'info>{
 #[instruction(channel: Pubkey)]
 pub struct SubscriptionCTX<'info> {
     #[account(
-        init_if_needed,
+        init,
         payer = signer,
         space = 8 + 1 + 8 + 8, // discriminator + bool + u64 + u64
-        seeds = [b"user_storage", signer.key().as_ref()],
+        seeds = [USER_STORAGE, signer.key().as_ref()],
         bump
     )]
     pub storage: Account<'info, UserStorage>,
 
     #[account(
-        init_if_needed,
+        init,
         payer = signer,
         space = 8 + 1, // discriminator + bool
-        seeds = [b"is_subscribed", signer.key().as_ref(), channel.key().as_ref()],
+        seeds = [SUBSCRIPTION, signer.key().as_ref(), channel.key().as_ref()],
         bump
     )]
     pub subscription: Account<'info, Subscription>,
@@ -312,7 +313,7 @@ pub struct SubscriptionCTX<'info> {
     /// CHECK: This account is not read or written in this instruction
     pub channel: AccountInfo<'info>,
     
-    #[account(mut, seeds = [b"push_comm_storage_v3"], bump)]
+    #[account(mut, seeds = [PUSH_COMM_STORAGE], bump)]
     pub comm_storage: Account<'info, PushCommStorageV3>,
 
     #[account(mut)]
@@ -323,7 +324,7 @@ pub struct SubscriptionCTX<'info> {
 #[derive(Accounts)]
 #[instruction(channel: Pubkey, delegate: Pubkey)]
 pub struct SendNotificationCTX<'info> {
-    #[account(seeds = [b"delegate", channel.key().as_ref(), delegate.key().as_ref()], bump)]
+    #[account(seeds = [DELEGATE, channel.key().as_ref(), delegate.key().as_ref()], bump)]
     pub delegate_storage: Account<'info, DelegatedNotificationSenders>,
 
     #[account(mut)]
@@ -335,15 +336,15 @@ pub struct SendNotificationCTX<'info> {
 #[instruction(channel: Pubkey)]
 pub struct UserChannelSettingsCTX<'info> {
     #[account(
-        init_if_needed,
+        init,
         payer = signer,
         space = 8 + 32 + 32 + 4 + MAX_NOTIF_SETTINGS_LENGTH, // discriminator + channel + user + notif_settings STRING
-        seeds = [b"user_notif_settings", signer.key().as_ref(), channel.key().as_ref()],
+        seeds = [USER_NOTIF_SETTINGS, signer.key().as_ref(), channel.key().as_ref()],
         bump
     )]
     pub storage: Account<'info, UserNotificationSettings>,
 
-    #[account(seeds = [b"is_subscribed", signer.key().as_ref(), channel.key().as_ref()], bump)]
+    #[account(seeds = [SUBSCRIPTION, signer.key().as_ref(), channel.key().as_ref()], bump)]
     pub subscription: Account<'info, Subscription>,
 
     /// CHECK: This account is not read or written in this instruction
