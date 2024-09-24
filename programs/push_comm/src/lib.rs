@@ -135,7 +135,7 @@ pub mod push_comm {
         Ok(())
     }
 
-    pub fn subscribe(ctx: Context<SubscriptionCTX>) -> Result<()> {
+    pub fn subscribe(ctx: Context<SubscriptionCTX>, channel: Pubkey) -> Result<()> {
         // TO-DO : add + _addUser() function logic here
         _add_user(&mut ctx.accounts.storage, &mut ctx.accounts.comm_storage)?;
         let user = &mut ctx.accounts.storage;
