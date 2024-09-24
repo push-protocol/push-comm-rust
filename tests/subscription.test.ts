@@ -18,8 +18,10 @@ describe("push_comm_subscription_tests", () => {
   const admin_temp = anchor.web3.Keypair.generate();
   let user1: anchor.web3.Keypair;
   let user2: anchor.web3.Keypair;
+  let user3: anchor.web3.Keypair;
   let channel1: anchor.web3.Keypair;
   let channel2: anchor.web3.Keypair;
+  let channel3: anchor.web3.Keypair;
 
 
   async function getCurrentBlockNumber(connection: anchor.web3.Connection): Promise<number> {
@@ -30,13 +32,20 @@ describe("push_comm_subscription_tests", () => {
   beforeEach(async () => {
     user1 = anchor.web3.Keypair.generate();
     user2 = anchor.web3.Keypair.generate();
+    user3 = anchor.web3.Keypair.generate();
+
     channel1 = anchor.web3.Keypair.generate();
     channel2 = anchor.web3.Keypair.generate();
+    channel3 = anchor.web3.Keypair.generate();
     // Fund all accounts at once
     await Promise.all([
       fundAccount(provider.connection, pushAdmin.publicKey, 10 * anchor.web3.LAMPORTS_PER_SOL),
       fundAccount(provider.connection, user1.publicKey, 5 * anchor.web3.LAMPORTS_PER_SOL),
-      fundAccount(provider.connection, user2.publicKey, 5 * anchor.web3.LAMPORTS_PER_SOL)
+      fundAccount(provider.connection, user2.publicKey, 5 * anchor.web3.LAMPORTS_PER_SOL),
+      fundAccount(provider.connection, user3.publicKey, 5 * anchor.web3.LAMPORTS_PER_SOL),
+      fundAccount(provider.connection, channel1.publicKey, 5 * anchor.web3.LAMPORTS_PER_SOL),
+      fundAccount(provider.connection, channel2.publicKey, 5 * anchor.web3.LAMPORTS_PER_SOL),
+      fundAccount(provider.connection, channel3.publicKey, 5 * anchor.web3.LAMPORTS_PER_SOL),
     ]);
   });
 
@@ -357,6 +366,146 @@ describe("push_comm_subscription_tests", () => {
         console.log("Error number:", err.error.errorCode);
       }
     });
+  });
+
+  describe("Subscribe-Unsubcribe Advance Checks ", () => {
+        
+    it("User 1 should be able to subscribe to multiple channels", async () => {
+
+      const [storageAccount] = await anchor.web3.PublicKey.findProgramAddressSync([SEEDS.PUSH_COMM_STORAGE], program.programId);
+      const [userStorageAccount] = await anchor.web3.PublicKey.findProgramAddressSync([SEEDS.USER_STORAGE, user1.publicKey.toBuffer()], program.programId);
+      const [subscriptionAccountFirst] = await anchor.web3.PublicKey.findProgramAddressSync([SEEDS.SUBSCRIPTION, user1.publicKey.toBuffer(), channel1.publicKey.toBuffer()], program.programId);
+      const [subscriptionAccountSecond] = await anchor.web3.PublicKey.findProgramAddressSync([SEEDS.SUBSCRIPTION, user1.publicKey.toBuffer(), channel2.publicKey.toBuffer()], program.programId);
+      const [subscriptionAccountThird] = await anchor.web3.PublicKey.findProgramAddressSync([SEEDS.SUBSCRIPTION, user1.publicKey.toBuffer(), channel3.publicKey.toBuffer()], program.programId);
+
+      // Subscribe user1 to channel1
+      await program.methods.subscribe(channel1.publicKey).accounts({
+          storage: userStorageAccount,
+          subscription: subscriptionAccountFirst,
+          channel: channel1.publicKey,
+          commStorage: storageAccount,
+          signer: user1.publicKey,
+          systemProgram: anchor.web3.SystemProgram.programId,
+      }).signers([user1]).rpc();
+
+      // Subscribe user1 to channel2
+      await program.methods.subscribe(channel2.publicKey).accounts({
+          storage: userStorageAccount,
+          subscription: subscriptionAccountSecond,
+          channel: channel2.publicKey,
+          commStorage: storageAccount,
+          signer: user1.publicKey,
+          systemProgram: anchor.web3.SystemProgram.programId,
+      }).signers([user1]).rpc();
+
+      // Subscribe user1 to channel3
+      await program.methods.subscribe(channel3.publicKey).accounts({
+          storage: userStorageAccount,
+          subscription: subscriptionAccountThird,
+          channel: channel3.publicKey,
+          commStorage: storageAccount,
+          signer: user1.publicKey,
+          systemProgram: anchor.web3.SystemProgram.programId,
+      }).signers([user1]).rpc();
+
+      // Fetch the user storage account to verify state updates for subscribe
+      const userStorage_before = await program.account.userStorage.fetch(userStorageAccount);
+      expect(userStorage_before.userSubscribeCount.toNumber()).to.equal(3);
+      expect(userStorage_before.userActivated).to.equal(true);
+
+      // Fetch the user subscription account to verify state updates for subscribe
+      const subscriptionFirst = await program.account.subscription.fetch(subscriptionAccountFirst);
+      const subscriptionSecond = await program.account.subscription.fetch(subscriptionAccountSecond);
+      const subscriptionThird = await program.account.subscription.fetch(subscriptionAccountThird);
+
+
+      expect(subscriptionFirst.isSubscribed).to.equal(true);
+      expect(subscriptionSecond.isSubscribed).to.equal(true);
+      expect(subscriptionThird.isSubscribed).to.equal(true);
+    });
+
+    it("User1 should Subscribe-Unsubscribe multiple channels - State checks", async () => {
+
+      const [storageAccount] = await anchor.web3.PublicKey.findProgramAddressSync([SEEDS.PUSH_COMM_STORAGE], program.programId);
+      const [userStorageAccount] = await anchor.web3.PublicKey.findProgramAddressSync([SEEDS.USER_STORAGE, user1.publicKey.toBuffer()], program.programId);
+      const [subscriptionAccountFirst] = await anchor.web3.PublicKey.findProgramAddressSync([SEEDS.SUBSCRIPTION, user1.publicKey.toBuffer(), channel1.publicKey.toBuffer()], program.programId);
+      const [subscriptionAccountSecond] = await anchor.web3.PublicKey.findProgramAddressSync([SEEDS.SUBSCRIPTION, user1.publicKey.toBuffer(), channel2.publicKey.toBuffer()], program.programId);
+      const [subscriptionAccountThird] = await anchor.web3.PublicKey.findProgramAddressSync([SEEDS.SUBSCRIPTION, user1.publicKey.toBuffer(), channel3.publicKey.toBuffer()], program.programId);
+
+      // Subscribe user1 to channel1
+      await program.methods.subscribe(channel1.publicKey).accounts({
+          storage: userStorageAccount,
+          subscription: subscriptionAccountFirst,
+          channel: channel1.publicKey,
+          commStorage: storageAccount,
+          signer: user1.publicKey,
+          systemProgram: anchor.web3.SystemProgram.programId,
+      }).signers([user1]).rpc();
+
+      // Subscribe user1 to channel2
+      await program.methods.subscribe(channel2.publicKey).accounts({
+          storage: userStorageAccount,
+          subscription: subscriptionAccountSecond,
+          channel: channel2.publicKey,
+          commStorage: storageAccount,
+          signer: user1.publicKey,
+          systemProgram: anchor.web3.SystemProgram.programId,
+      }).signers([user1]).rpc();
+
+      // Subscribe user1 to channel3
+      await program.methods.subscribe(channel3.publicKey).accounts({
+          storage: userStorageAccount,
+          subscription: subscriptionAccountThird,
+          channel: channel3.publicKey,
+          commStorage: storageAccount,
+          signer: user1.publicKey,
+          systemProgram: anchor.web3.SystemProgram.programId,
+      }).signers([user1]).rpc();
+
+      // Fetch the user storage account to verify state updates for subscribe
+      const userStorage_before = await program.account.userStorage.fetch(userStorageAccount);
+      expect(userStorage_before.userSubscribeCount.toNumber()).to.equal(3);
+      expect(userStorage_before.userActivated).to.equal(true);
+
+      // Fetch the user subscription account to verify state updates for subscribe
+      const subscription_before = await program.account.subscription.fetch(subscriptionAccountFirst);
+      const subscription_second = await program.account.subscription.fetch(subscriptionAccountSecond);
+      expect(subscription_before.isSubscribed).to.equal(true);
+      expect(subscription_second.isSubscribed).to.equal(true);
+
+      // Unsubscribe user1 from channel1
+      await program.methods.unsubscribe(channel1.publicKey).accounts({
+          storage: userStorageAccount,
+          subscription: subscriptionAccountFirst,
+          channel: channel1.publicKey,
+          commStorage: storageAccount,
+          signer: user1.publicKey,
+          systemProgram: anchor.web3.SystemProgram.programId,
+      }).signers([user1]).rpc();
+
+      // Unsubscribe user1 from channel2 
+      await program.methods.unsubscribe(channel2.publicKey).accounts({
+          storage: userStorageAccount,
+          subscription: subscriptionAccountSecond,
+          channel: channel2.publicKey,
+          commStorage: storageAccount,
+          signer: user1.publicKey,
+          systemProgram: anchor.web3.SystemProgram.programId,
+      }).signers([user1]).rpc();
+
+      // Fetch the user storage account to verify state updates for unsubscribe
+      const userStorage_now = await program.account.userStorage.fetch(userStorageAccount);
+      expect(userStorage_now.userSubscribeCount.toNumber()).to.equal(1);
+      expect(userStorage_now.userActivated).to.equal(true);
+
+      // Fetch the user subscription account to verify state updates for unsubscibe
+      const subscriptionFirst_now = await program.account.subscription.fetch(subscriptionAccountFirst);
+      const subscriptionSecond_now = await program.account.subscription.fetch(subscriptionAccountSecond);
+
+      expect(subscriptionFirst_now.isSubscribed).to.equal(false);
+      expect(subscriptionSecond_now.isSubscribed).to.equal(false);
+    });
+
   });
 
 });
