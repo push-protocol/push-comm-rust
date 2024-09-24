@@ -157,7 +157,7 @@ pub mod push_comm {
         Ok(())
     }
 
-    pub fn unsubscribe(ctx: Context<SubscriptionCTX>) -> Result<()>{
+    pub fn unsubscribe(ctx: Context<SubscriptionCTX>, channel: Pubkey) -> Result<()>{
         let user = &mut ctx.accounts.storage;
         let subscription = &mut ctx.accounts.subscription;
 
@@ -293,7 +293,7 @@ pub struct DelegateNotifSenders <'info>{
 #[instruction(channel: Pubkey)]
 pub struct SubscriptionCTX<'info> {
     #[account(
-        init,
+        init_if_needed,
         payer = signer,
         space = 8 + 1 + 8 + 8, // discriminator + bool + u64 + u64
         seeds = [USER_STORAGE, signer.key().as_ref()],
@@ -302,7 +302,7 @@ pub struct SubscriptionCTX<'info> {
     pub storage: Account<'info, UserStorage>,
 
     #[account(
-        init,
+        init_if_needed,
         payer = signer,
         space = 8 + 1, // discriminator + bool
         seeds = [SUBSCRIPTION, signer.key().as_ref(), channel.key().as_ref()],

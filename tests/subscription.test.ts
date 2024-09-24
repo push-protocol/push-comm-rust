@@ -125,6 +125,7 @@ describe("push_comm_subscription_tests", () => {
    * 3. Should increase user count
    * 4. Should update user's subscription status
    * 5. Should emit Subscribe event
+   * 6. A user should subscribe to multiple channels - State updates should work accordingly
    */
 
     it("Should subscribe user1 & update states accurately", async () => {
@@ -195,6 +196,164 @@ describe("push_comm_subscription_tests", () => {
     expect(subscribedEvent).to.not.be.null;
     expect(subscribedEvent.user.toString()).to.equal(user1.publicKey.toString());
     expect(subscribedEvent.channel.toString()).to.equal(channel1.publicKey.toString());
+    });
+
+    it ("Should not subscribe user1 twice", async () => {
+      const [storageAccount, bump2nd] = await anchor.web3.PublicKey.findProgramAddressSync([SEEDS.PUSH_COMM_STORAGE], program.programId);
+      const [userStorageAccount, bump1st] = await anchor.web3.PublicKey.findProgramAddressSync([SEEDS.USER_STORAGE, user1.publicKey.toBuffer()], program.programId);
+      const [subscriptionAccount, bump3rd] = await anchor.web3.PublicKey.findProgramAddressSync([SEEDS.SUBSCRIPTION, user1.publicKey.toBuffer(), channel1.publicKey.toBuffer()], program.programId);
+      
+      // User1 subscribes to channel1
+      await program.methods.subscribe(channel1.publicKey).accounts({
+        storage: userStorageAccount,
+        subscription: subscriptionAccount,
+        channel: channel1.publicKey,
+        commStorage: storageAccount,
+        signer: user1.publicKey,
+        systemProgram: anchor.web3.SystemProgram.programId,
+      }).signers([user1]).rpc();
+
+      // User1 tries to subscribe to channel1 again
+      try{
+        await program.methods.subscribe(channel1.publicKey).accounts({
+          storage: userStorageAccount,
+          subscription: subscriptionAccount,
+          channel: channel1.publicKey,
+          commStorage: storageAccount,
+          signer: user1.publicKey,
+          systemProgram: anchor.web3.SystemProgram.programId,
+        }).signers([user1]).rpc();
+        assert.fail("Should not subscribe user1 twice");
+      } catch (_err){
+        assert.isTrue(_err instanceof anchor.AnchorError, "Error is not an Anchor Error");
+        const err: anchor.AnchorError = _err;
+        const expectedErrorMsg = ERRORS.AlreadySubscribed;
+        assert.strictEqual(err.error.errorMessage, expectedErrorMsg, `Error message should be ${expectedErrorMsg}`);
+        console.log("Error number:", err.error.errorCode);
+      }
+      
+    });
+
+    /**
+   * Unsubscribe Function Tests
+   * 1. Should update states accurately
+   * 2. Shoud emit Unsubscribed event
+   * 3. Should only work for subscribed users
+   */
+
+    it("Should unsubscribe user1 & update states accurately", async () => {
+
+      const [storageAccount, bump2nd] = await anchor.web3.PublicKey.findProgramAddressSync([SEEDS.PUSH_COMM_STORAGE], program.programId);
+      const [userStorageAccount, bump1st] = await anchor.web3.PublicKey.findProgramAddressSync([SEEDS.USER_STORAGE, user1.publicKey.toBuffer()], program.programId);
+      const [subscriptionAccount, bump3rd] = await anchor.web3.PublicKey.findProgramAddressSync([SEEDS.SUBSCRIPTION, user1.publicKey.toBuffer(), channel1.publicKey.toBuffer()], program.programId);
+        
+      // Subscribe user1
+      await program.methods.subscribe(channel1.publicKey).accounts({
+          storage: userStorageAccount,
+          subscription: subscriptionAccount,
+          channel: channel1.publicKey,
+          commStorage: storageAccount,
+          signer: user1.publicKey,
+          systemProgram: anchor.web3.SystemProgram.programId,
+      }).signers([user1]).rpc();
+
+      // Fetch the user storage account to verify state updates for subscribe
+      const userStorage_before = await program.account.userStorage.fetch(userStorageAccount);
+      expect(userStorage_before.userSubscribeCount.toNumber()).to.equal(1);
+      expect(userStorage_before.userActivated).to.equal(true);
+
+      // Fetch the user subscription account to verify state updates for subscribe
+      const subscription_before = await program.account.subscription.fetch(subscriptionAccount);
+      expect(subscription_before.isSubscribed).to.equal(true);
+
+      // Unsubscribe user1
+      await program.methods.unsubscribe(channel1.publicKey).accounts({
+          storage: userStorageAccount,
+          subscription: subscriptionAccount,
+          channel: channel1.publicKey,
+          commStorage: storageAccount,
+          signer: user1.publicKey,
+          systemProgram: anchor.web3.SystemProgram.programId,
+      }).signers([user1]).rpc();
+
+      // Fetch the user storage account to verify state updates for unsubscribe
+      const userStorage_now = await program.account.userStorage.fetch(userStorageAccount);
+      expect(userStorage_now.userSubscribeCount.toNumber()).to.equal(0);
+      expect(userStorage_now.userActivated).to.equal(true);
+
+      // Fetch the user subscription account to verify state updates for unsubscibe
+      const subscription = await program.account.subscription.fetch(subscriptionAccount);
+      expect(subscription.isSubscribed).to.equal(false);
+    });
+
+    it("Should emit Unsubscribed event", async () => {
+
+      const [storageAccount, bump2nd] = await anchor.web3.PublicKey.findProgramAddressSync([SEEDS.PUSH_COMM_STORAGE], program.programId);
+      const [userStorageAccount, bump1st] = await anchor.web3.PublicKey.findProgramAddressSync([SEEDS.USER_STORAGE, user1.publicKey.toBuffer()], program.programId);
+      const [subscriptionAccount, bump3rd] = await anchor.web3.PublicKey.findProgramAddressSync([SEEDS.SUBSCRIPTION, user1.publicKey.toBuffer(), channel1.publicKey.toBuffer()], program.programId);
+        
+          // Subscribe user1
+      await program.methods.subscribe(channel1.publicKey).accounts({
+        storage: userStorageAccount,
+        subscription: subscriptionAccount,
+        channel: channel1.publicKey,
+        commStorage: storageAccount,
+        signer: user1.publicKey,
+        systemProgram: anchor.web3.SystemProgram.programId,
+      }).signers([user1]).rpc();
+
+      let unsubscribedEvent: any = null;
+      
+      const listener = program.addEventListener('Unsubscribed', (event, slot) => {
+        // console.log(`Slot ${slot}: Unsubscribed event - User: ${event.user}, Channel: ${event.channel}`);
+        unsubscribedEvent = event;
+      });
+
+      // Unsubscribe user1
+      await program.methods.unsubscribe(channel1.publicKey).accounts({
+        storage: userStorageAccount,
+        subscription: subscriptionAccount,
+        channel: channel1.publicKey,
+        commStorage: storageAccount,
+        signer: user1.publicKey,
+        systemProgram: anchor.web3.SystemProgram.programId,
+    }).signers([user1]).rpc();
+
+    // Waiting to capture event
+    await new Promise((resolve) => setTimeout(resolve, 5000));
+
+    // Removing the event listener
+    await program.removeEventListener(listener);
+
+    // Assert that the event was emitted with correct parameters
+    expect(unsubscribedEvent).to.not.be.null;
+    expect(unsubscribedEvent.user.toString()).to.equal(user1.publicKey.toString());
+    expect(unsubscribedEvent.channel.toString()).to.equal(channel1.publicKey.toString());
+    });
+
+    it("Should not unsubscribe user1 without subscribing", async () => {
+      const [storageAccount, bump2nd] = await anchor.web3.PublicKey.findProgramAddressSync([SEEDS.PUSH_COMM_STORAGE], program.programId);
+      const [userStorageAccount, bump1st] = await anchor.web3.PublicKey.findProgramAddressSync([SEEDS.USER_STORAGE, user1.publicKey.toBuffer()], program.programId);
+      const [subscriptionAccount, bump3rd] = await anchor.web3.PublicKey.findProgramAddressSync([SEEDS.SUBSCRIPTION, user1.publicKey.toBuffer(), channel1.publicKey.toBuffer()], program.programId);
+      
+      // User1 tries to unsubscribe without subscribing
+      try{
+        await program.methods.unsubscribe(channel1.publicKey).accounts({
+          storage: userStorageAccount,
+          subscription: subscriptionAccount,
+          channel: channel1.publicKey,
+          commStorage: storageAccount,
+          signer: user1.publicKey,
+          systemProgram: anchor.web3.SystemProgram.programId,
+        }).signers([user1]).rpc();
+        assert.fail("Should not unsubscribe user1 without subscribing");
+      } catch (_err){
+        assert.isTrue(_err instanceof anchor.AnchorError, "Error is not an Anchor Error");
+        const err: anchor.AnchorError = _err;
+        const expectedErrorMsg = ERRORS.NotSubscribed;
+        assert.strictEqual(err.error.errorMessage, expectedErrorMsg, `Error message should be ${expectedErrorMsg}`);
+        console.log("Error number:", err.error.errorCode);
+      }
     });
   
 
