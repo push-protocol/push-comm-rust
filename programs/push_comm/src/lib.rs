@@ -147,6 +147,7 @@ pub mod push_comm {
     }
 
     pub fn set_user_notification_settings(ctx: Context<UserChannelSettingsCTX>,
+        channel: Pubkey,
         notif_id: u64,
         notif_settings: String
     ) -> Result<()> {
@@ -163,8 +164,8 @@ pub mod push_comm {
         storage.notif_settings = notif_setting_data.clone();
 
         emit!(UserNotifcationSettingsAdded {
-            channel: ctx.accounts.channel.key(),
-            user: ctx.accounts.storage.user,
+            channel: channel,
+            user: ctx.accounts.signer.key(),
             notif_id: notif_id,
             notif_settings: notif_setting_data,
         });
@@ -324,9 +325,6 @@ pub struct UserChannelSettingsCTX<'info> {
 
     #[account(seeds = [SUBSCRIPTION, signer.key().as_ref(), channel.key().as_ref()], bump)]
     pub subscription: Account<'info, Subscription>,
-
-    /// CHECK: This account is not read or written in this instruction
-    pub channel: AccountInfo<'info>,
 
     #[account(mut)]
     pub signer: Signer<'info>,
