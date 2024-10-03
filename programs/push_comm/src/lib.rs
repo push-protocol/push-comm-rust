@@ -102,39 +102,6 @@ pub mod push_comm {
         Ok(())
     }
 
-    pub fn add_delegate(ctx: Context<DelegateNotifSenders>,
-        delegate: Pubkey
-    ) -> Result<()>{
-        // TO-DO :added _subscribe() function here
-        let storage = &mut ctx.accounts.storage;
-
-        storage.channel = ctx.accounts.signer.key();
-        storage.delegate = delegate;
-        storage.is_delegate = true;
-        
-        emit!(AddDelegate {
-            channel: ctx.accounts.signer.key(),
-            delegate: ctx.accounts.storage.delegate,
-        });
-        Ok(())
-    }
-
-    pub fn remove_delegate(ctx: Context<DelegateNotifSenders>,
-        delegate: Pubkey
-    ) -> Result<()>{
-        let storage = &mut ctx.accounts.storage;
-
-        storage.channel = ctx.accounts.signer.key();
-        storage.delegate = delegate;
-        storage.is_delegate = false;
-
-        emit!(RemoveDelegate {
-            channel: ctx.accounts.signer.key(),
-            delegate: ctx.accounts.storage.delegate,
-        });
-        Ok(())
-    }
-
     pub fn subscribe(ctx: Context<SubscriptionCTX>, channel: Pubkey) -> Result<()> {
         // TO-DO : add + _addUser() function logic here
         _add_user(&mut ctx.accounts.storage, &mut ctx.accounts.comm_storage)?;
@@ -179,27 +146,6 @@ pub mod push_comm {
         Ok(())
     }
 
-    pub fn send_notification(ctx: Context<SendNotificationCTX>,
-        recipient: Pubkey,
-        message: Vec<u8>,
-    ) -> Result<()> {
-        let sender: &Signer<'_> = &ctx.accounts.signer;
-        let delegate_storage = &ctx.accounts.delegate_storage;
-
-        let is_authorized = (delegate_storage.channel == sender.key()) || 
-            (delegate_storage.delegate == sender.key() && delegate_storage.is_delegate);
-
-        if is_authorized {
-            emit!(SendNotification {
-                channel: delegate_storage.channel,
-                recipient: recipient,
-                message: message,
-            });
-        }
-
-        Ok(())
-    }
-
     pub fn set_user_notification_settings(ctx: Context<UserChannelSettingsCTX>,
         notif_id: u64,
         notif_settings: String
@@ -225,6 +171,65 @@ pub mod push_comm {
 
         Ok(())
     }
+
+    // Notification-Specific Functions
+    pub fn add_delegate(ctx: Context<DelegateNotifSenders>,
+        delegate: Pubkey
+    ) -> Result<()>{
+        // TO-DO :added _subscribe() function here
+        let storage = &mut ctx.accounts.storage;
+        require!( !storage.is_delegate, PushCommError::DelegateAlreadyAdded );
+
+        storage.channel = ctx.accounts.signer.key();
+        storage.delegate = delegate;
+        storage.is_delegate = true;
+        
+        emit!(AddDelegate {
+            channel: ctx.accounts.signer.key(),
+            delegate: ctx.accounts.storage.delegate,
+        });
+        Ok(())
+    }
+
+    pub fn remove_delegate(ctx: Context<DelegateNotifSenders>,
+        delegate: Pubkey
+    ) -> Result<()>{
+        let storage = &mut ctx.accounts.storage;
+
+        require!(storage.is_delegate, PushCommError::DelegateNotFound);
+
+        storage.channel = ctx.accounts.signer.key();
+        storage.delegate = delegate;
+        storage.is_delegate = false;
+
+        emit!(RemoveDelegate {
+            channel: ctx.accounts.signer.key(),
+            delegate: ctx.accounts.storage.delegate,
+        });
+        Ok(())
+    }
+
+    pub fn send_notification(ctx: Context<SendNotificationCTX>,
+        channel: Pubkey,
+        recipient: Pubkey,
+        message: Vec<u8>,
+    ) -> Result<()> {
+            let caller = &ctx.accounts.signer;
+            let delegate_storage = &ctx.accounts.delegate_storage;
+
+            let is_valid = (delegate_storage.delegate == caller.key() && delegate_storage.is_delegate);
+
+            if is_valid {
+                emit!(SendNotification {
+                    channel: channel,
+                    recipient,
+                    message,
+                });
+            }
+
+        Ok(())
+    }
+
     
 }
 
@@ -274,22 +279,6 @@ pub struct AliasVerificationCTX <'info > {
 }
 
 #[derive(Accounts)]
-#[instruction(delegate: Pubkey)]
-pub struct DelegateNotifSenders <'info>{
-    #[account(
-        init,
-        payer = signer,
-        space = 8 + 32 + 32 + 1, // discriminator + channel + delegate + bool
-        seeds = [DELEGATE, signer.key().as_ref(), delegate.key().as_ref()],
-        bump )]
-    pub storage: Account<'info, DelegatedNotificationSenders>,
-
-    #[account(mut)]
-    pub signer: Signer<'info>,
-    pub system_program: Program<'info, System>,
-}
-
-#[derive(Accounts)]
 #[instruction(channel: Pubkey)]
 pub struct SubscriptionCTX<'info> {
     #[account(
@@ -322,17 +311,6 @@ pub struct SubscriptionCTX<'info> {
 }
 
 #[derive(Accounts)]
-#[instruction(channel: Pubkey, delegate: Pubkey)]
-pub struct SendNotificationCTX<'info> {
-    #[account(seeds = [DELEGATE, channel.key().as_ref(), delegate.key().as_ref()], bump)]
-    pub delegate_storage: Account<'info, DelegatedNotificationSenders>,
-
-    #[account(mut)]
-    pub signer: Signer<'info>,
-    pub system_program: Program<'info, System>,
-}
-
-#[derive(Accounts)]
 #[instruction(channel: Pubkey)]
 pub struct UserChannelSettingsCTX<'info> {
     #[account(
@@ -354,3 +332,34 @@ pub struct UserChannelSettingsCTX<'info> {
     pub signer: Signer<'info>,
     pub system_program: Program<'info, System>,
 }
+// Notification-Specific CTXs
+#[derive(Accounts)]
+#[instruction(delegate: Pubkey)]
+pub struct DelegateNotifSenders <'info>{
+    #[account(
+        init_if_needed,
+        payer = signer,
+        space = 8 + 32 + 32 + 1, // discriminator + channel + delegate + bool
+        seeds = [DELEGATE, signer.key().as_ref(), delegate.key().as_ref()],
+        bump )]
+    pub storage: Account<'info, DelegatedNotificationSenders>,
+
+    #[account(mut)]
+    pub signer: Signer<'info>,
+    pub system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
+#[instruction(channel: Pubkey)]
+pub struct SendNotificationCTX<'info> {
+    #[account(seeds = [DELEGATE, 
+        channel.key().as_ref(),
+        signer.key().as_ref()],
+        bump)]
+    pub delegate_storage: Account<'info, DelegatedNotificationSenders>,
+
+    #[account(mut)]
+    pub signer: Signer<'info>,
+    pub system_program: Program<'info, System>,
+}
+

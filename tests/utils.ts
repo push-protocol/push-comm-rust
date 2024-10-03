@@ -25,6 +25,8 @@ export enum ERRORS {
   NotSubscribed = "Not Subscribed to this channel",
   Underflow = "Underflow Error",
   Overflow = "Overflow Error",
+  DelegateAlreadyAdded = "Delegate Already Added",
+  DelegateNotFound = "Delegate Not Added or Removed",
 }
 
   export async function fundAccount(connection: anchor.web3.Connection, account: anchor.web3.PublicKey, amount: number) {
