@@ -23,5 +23,9 @@ pub enum PushCommError {
     Underflow,
     #[msg("Overflow Error")]
     Overflow,
+    #[msg("Delegate Already Added")]
+    DelegateAlreadyAdded,
+    #[msg("Delegate Not Added or Removed")]
+    DelegateNotFound,    
     // Add more errors as needed
 }
