@@ -486,7 +486,7 @@ describe("push_comm_subscription_tests", () => {
    */
 
 
-  describe("Send Notifications Basic Checks", () => {
+  describe("Send Notifications Tests", () => {
 
       it("Notification to USER1 by delegate1 for Channel 1", async () => {
         const [delegateStroage, bump] = await anchor.web3.PublicKey.findProgramAddressSync([SEEDS.DELEGATE, channel1.publicKey.toBuffer(), delegate1.publicKey.toBuffer()], program.programId);
