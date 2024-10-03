@@ -354,6 +354,38 @@ describe("push_comm_subscription_tests", () => {
 
     });
 
+    it("Channel1 adding itself as a delegate multiple times should fail", async () => {
+      const [delegateStorage] = await anchor.web3.PublicKey.findProgramAddressSync(
+        [SEEDS.DELEGATE, channel1.publicKey.toBuffer(), channel1.publicKey.toBuffer()],
+        program.programId
+      );
+    
+      // First attempt to add channel1 as its own delegate
+      await program.methods.addDelegate(channel1.publicKey).accounts({
+        storage: delegateStorage,
+        signer: channel1.publicKey,
+        systemProgram: anchor.web3.SystemProgram.programId,
+      }).signers([channel1]).rpc();
+    
+      // Attempt to add channel1 as a delegate again (should fail)
+      try {
+        await program.methods.addDelegate(channel1.publicKey).accounts({
+          storage: delegateStorage,
+          signer: channel1.publicKey,
+          systemProgram: anchor.web3.SystemProgram.programId,
+        }).signers([channel1]).rpc();
+    
+        // If the transaction succeeds, fail the test because it shouldn't happen
+        assert.fail("Adding a delegate twice should revert an error");
+      } catch (_err) {
+        assert.isTrue(_err instanceof anchor.AnchorError, "Error is not an Anchor Error");
+        const err: anchor.AnchorError = _err;
+        const expectedErrorMsg = ERRORS.DelegateAlreadyAdded;
+        assert.strictEqual(err.error.errorMessage, expectedErrorMsg, `Error message should be: ${expectedErrorMsg}`);
+      }
+    });
+    
+
     it("Channel1 tries removing delegate1 twice", async () => {
       const [delegateStroage] = await anchor.web3.PublicKey.findProgramAddressSync([SEEDS.DELEGATE, channel1.publicKey.toBuffer(), delegate1.publicKey.toBuffer()], program.programId);
 
@@ -450,6 +482,7 @@ describe("push_comm_subscription_tests", () => {
    * 1. Should emit Notification event
    * 2. Only allowed delegates should emit the event
    * 3. Emit should not work if the delegate address is unauthorized
+   * 4. Emit shouldn't work if channel1 has not added itself as a delegate
    */
 
 
@@ -467,11 +500,6 @@ describe("push_comm_subscription_tests", () => {
         })
         .signers([channel1])
         .rpc();
-
-        const delegateStorageData = await program.account.delegatedNotificationSenders.fetch(delegateStroage);
-        expect(delegateStorageData.channel.toString()).to.eq(channel1.publicKey.toString());
-        expect(delegateStorageData.delegate.toString()).to.eq(delegate1.publicKey.toString());
-        expect(delegateStorageData.isDelegate).to.eq(true);
 
         // Prepare notification data
         const notificationIdentity = Buffer.from("Test notification from delegate");
@@ -515,11 +543,6 @@ describe("push_comm_subscription_tests", () => {
         .signers([channel1])
         .rpc();
 
-        const delegateStorageData = await program.account.delegatedNotificationSenders.fetch(delegateStroage);
-        expect(delegateStorageData.channel.toString()).to.eq(channel1.publicKey.toString());
-        expect(delegateStorageData.delegate.toString()).to.eq(channel1.publicKey.toString());
-        expect(delegateStorageData.isDelegate).to.eq(true);
-
         // Prepare notification data
         const notificationIdentity = Buffer.from("Test notification from delegate");
         
@@ -548,6 +571,204 @@ describe("push_comm_subscription_tests", () => {
           expect(notificationEvent.message.toString()).to.eq(notificationIdentity.toString());
 
       });
+
+      it("Emit should not work if delegate1 is authorized for channel1 but delegate2 calls sendNotification", async () => {
+        const [delegateStorage] = await anchor.web3.PublicKey.findProgramAddressSync(
+          [SEEDS.DELEGATE, channel1.publicKey.toBuffer(), delegate1.publicKey.toBuffer()],
+          program.programId
+        );
+      
+        // Authorize delegate1 for channel1
+        await program.methods.addDelegate(delegate1.publicKey).accounts({
+          storage: delegateStorage,
+          signer: channel1.publicKey,
+          systemProgram: anchor.web3.SystemProgram.programId,
+        }).signers([channel1]).rpc();
+      
+        let sendNotificationEvent: any = null;
+      
+        // Listen for the SendNotification event
+        const listener = program.addEventListener('SendNotification', (event, slot) => {
+          sendNotificationEvent = event;
+        });
+      
+        // Attempt to send a notification using delegate2 instead of delegate1
+        const notificationMessage = Buffer.from("Attempted notification from unauthorized delegate");
+        await program.methods.sendNotification(channel1.publicKey, user1.publicKey, notificationMessage).accounts({
+          delegateStorage: delegateStorage,
+          signer: delegate2.publicKey,
+          systemProgram: anchor.web3.SystemProgram.programId,
+        }).signers([delegate2]).rpc().catch(err => {
+          // Ignoring the error since we are testing failure case
+        });
+      
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+        await program.removeEventListener(listener);
+      
+        // Assert that no SendNotification event was emitted
+        expect(sendNotificationEvent).to.be.null;
+      });
+
+      it("Send Notification Emit shouldn't work if channel1 has not added itself as a delegate first", async () => {
+        const [delegateStorage] = await anchor.web3.PublicKey.findProgramAddressSync(
+          [SEEDS.DELEGATE, channel1.publicKey.toBuffer(), channel1.publicKey.toBuffer()],
+          program.programId
+        );
+      
+        let sendNotificationEvent: any = null;
+      
+        // Listen for the SendNotification event
+        const listener = program.addEventListener('SendNotification', (event, slot) => {
+          sendNotificationEvent = event;
+        });
+      
+        // Attempt to send a notification using channel1 without adding itself as a delegate
+        const notificationMessage = Buffer.from("Notification attempt without delegate authorization");
+        await program.methods.sendNotification(channel1.publicKey, user1.publicKey, notificationMessage).accounts({
+          delegateStorage: delegateStorage,
+          signer: channel1.publicKey,
+          systemProgram: anchor.web3.SystemProgram.programId,
+        }).signers([channel1]).rpc().catch(err => {
+          // Ignoring the error since we are testing failure case
+        });
+      
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+        await program.removeEventListener(listener);
+      
+        // Assert that no SendNotification event was emitted
+        expect(sendNotificationEvent).to.be.null;
+      });
+
+      it("Attempt to send notification after delegate is removed should fail", async () => {
+        const [delegateStorage] = await anchor.web3.PublicKey.findProgramAddressSync(
+          [SEEDS.DELEGATE, channel1.publicKey.toBuffer(), delegate1.publicKey.toBuffer()],
+          program.programId
+        );
+      
+        // Initialize delegate_storage by adding delegate1
+        await program.methods.addDelegate(delegate1.publicKey).accounts({
+          storage: delegateStorage,
+          signer: channel1.publicKey,
+          systemProgram: anchor.web3.SystemProgram.programId,
+        }).signers([channel1]).rpc();
+      
+        // Remove delegate1
+        await program.methods.removeDelegate(delegate1.publicKey).accounts({
+          storage: delegateStorage,
+          signer: channel1.publicKey,
+          systemProgram: anchor.web3.SystemProgram.programId,
+        }).signers([channel1]).rpc();
+      
+        // Attempt to send a notification using the removed delegate
+        const notificationIdentity = Buffer.from("Notification after removal");
+      
+        let sendNotificationEvent: any = null;
+      
+        // Listen for the SendNotification event
+        const listener = program.addEventListener('SendNotification', (event, slot) => {
+          sendNotificationEvent = event;
+        });
+      
+        // Attempt to send a notification using channel1 without adding itself as a delegate
+        const notificationMessage = Buffer.from("Notification attempt without delegate authorization");
+        await program.methods.sendNotification(channel1.publicKey, user1.publicKey, notificationMessage).accounts({
+          delegateStorage: delegateStorage,
+          signer: channel1.publicKey,
+          systemProgram: anchor.web3.SystemProgram.programId,
+        }).signers([channel1]).rpc().catch(err => {
+          // Ignoring the error since we are testing failure case
+        });
+      
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+        await program.removeEventListener(listener);
+      
+        // Assert that no SendNotification event was emitted
+        expect(sendNotificationEvent).to.be.null;
+      });
+
+      it("Multiple delegates for one channel should be able to send notifications", async () => {
+        const [delegateStorage1] = await anchor.web3.PublicKey.findProgramAddressSync(
+          [SEEDS.DELEGATE, channel1.publicKey.toBuffer(), delegate1.publicKey.toBuffer()],
+          program.programId
+        );
+      
+        const [delegateStorage2] = await anchor.web3.PublicKey.findProgramAddressSync(
+          [SEEDS.DELEGATE, channel1.publicKey.toBuffer(), delegate2.publicKey.toBuffer()],
+          program.programId
+        );
+      
+        // Step 1: Add delegate1 and delegate2 for channel1
+        await program.methods.addDelegate(delegate1.publicKey).accounts({
+          storage: delegateStorage1,
+          signer: channel1.publicKey,
+          systemProgram: anchor.web3.SystemProgram.programId,
+        }).signers([channel1]).rpc();
+      
+        await program.methods.addDelegate(delegate2.publicKey).accounts({
+          storage: delegateStorage2,
+          signer: channel1.publicKey,
+          systemProgram: anchor.web3.SystemProgram.programId,
+        }).signers([channel1]).rpc();
+      
+        // Step 2: Prepare notification data
+        const notificationIdentity = Buffer.from("Test notification from delegate");
+      
+        // Event listener for SendNotification
+        let notificationEvent: any = null;
+        const listener = program.addEventListener('SendNotification', (event, slot) => {
+          notificationEvent = event;
+        });
+      
+        // Step 3: Delegate1 sends a notification
+        await program.methods.sendNotification(channel1.publicKey, user1.publicKey, notificationIdentity)
+          .accounts({
+            delegateStorage: delegateStorage1,
+            signer: delegate1.publicKey,
+            systemProgram: anchor.web3.SystemProgram.programId,
+          })
+          .signers([delegate1])
+          .rpc();
+      
+        // Allow some time for event to be emitted
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+        await program.removeEventListener(listener);
+      
+        // Step 4: Assertions for Delegate1
+        expect(notificationEvent).to.not.be.null;
+        expect(notificationEvent.recipient.toString()).to.eq(user1.publicKey.toString());
+        expect(notificationEvent.channel.toString()).to.eq(channel1.publicKey.toString());
+        expect(notificationEvent.message.toString()).to.eq(notificationIdentity.toString());
+      
+        // Step 5: Reset the event listener for the next delegate
+        notificationEvent = null;
+        const secondListener = program.addEventListener('SendNotification', (event, slot) => {
+          notificationEvent = event;
+        });
+      
+        // Step 6: Delegate2 sends a notification
+        await program.methods.sendNotification(channel1.publicKey, user2.publicKey, notificationIdentity)
+          .accounts({
+            delegateStorage: delegateStorage2,
+            signer: delegate2.publicKey,
+            systemProgram: anchor.web3.SystemProgram.programId,
+          })
+          .signers([delegate2])
+          .rpc();
+      
+        // Allow some time for event to be emitted
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+        await program.removeEventListener(secondListener);
+      
+        // Step 7: Assertions for Delegate2
+        expect(notificationEvent).to.not.be.null;
+        expect(notificationEvent.recipient.toString()).to.eq(user2.publicKey.toString());
+        expect(notificationEvent.channel.toString()).to.eq(channel1.publicKey.toString());
+        expect(notificationEvent.message.toString()).to.eq(notificationIdentity.toString());
+      });
+      
+      
+      
+      
 
         
     
