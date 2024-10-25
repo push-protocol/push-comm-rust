@@ -74,8 +74,8 @@ This repo includes the Solana-Rust implementation of the Push Communicator contr
 ## Running on Localnet
 For **localnet**, ensure to run the Solana test validator in a separate terminal:
 
-    ```bash
+    
     solana-test-validator
-    ```
+    
 
 This will start a local Solana cluster that your deployment scripts can interact with.
