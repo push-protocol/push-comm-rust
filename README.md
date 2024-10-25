@@ -45,7 +45,7 @@ This repo includes the Solana-Rust implementation of the Push Communicator contr
     Use the provided deployment script to build and deploy the Push Communicator program. This script will automatically use the values from your .env file for the selected network and wallet:
 
     ```bash
-        bash scripts/deploy.sh
+    bash scripts/deploy.sh
     ```
 
     The script will perform the following actions:
@@ -61,7 +61,7 @@ This repo includes the Solana-Rust implementation of the Push Communicator contr
     If you need to upgrade an existing program, use the upgrade script. This script will also use the values from your .env file:
 
     ```bash
-        bash scripts/upgrade.sh
+    bash scripts/upgrade.sh
     ```
 
     The upgrade process will:
@@ -75,7 +75,7 @@ This repo includes the Solana-Rust implementation of the Push Communicator contr
 For **localnet**, ensure to run the Solana test validator in a separate terminal:
 
     ```bash
-        solana-test-validator
+    solana-test-validator
     ```
 
 This will start a local Solana cluster that your deployment scripts can interact with.
