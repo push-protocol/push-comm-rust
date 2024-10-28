@@ -111,23 +111,7 @@ pub mod push_comm {
     }
 
     pub fn unsubscribe(ctx: Context<SubscriptionCTX>, channel: Pubkey) -> Result<()>{
-        let user = &mut ctx.accounts.storage;
-        let subscription = &mut ctx.accounts.subscription;
-
-        require!(subscription.is_subscribed == true, PushCommError::NotSubscribed);
-
-        // Decrease user subscribe count
-        user.user_subscribe_count = user
-        .user_subscribe_count
-        .checked_sub(1)
-        .ok_or(PushCommError::Underflow)?;
-        // Mark user as unsubscribed for a given channel
-        subscription.is_subscribed = false;
-
-        emit!(Unsubscribed {
-            user: ctx.accounts.signer.key(),
-            channel: ctx.accounts.channel.key(),
-        });
+        _unsubscribe(&mut ctx.accounts.storage, &mut ctx.accounts.subscription, channel)?;
 
         Ok(())
     }
@@ -234,17 +218,36 @@ fn _add_user(user_storage: &mut Account<UserStorage>, comm_storage: &mut Account
 }
 
 fn _subscribe(user_storage: &mut Account<UserStorage>, subscription_storage: &mut Account<Subscription>, channel: Pubkey) -> Result<()> {
-        require!(subscription_storage.is_subscribed == false, PushCommError::AlreadySubscribed);
+    require!(subscription_storage.is_subscribed == false, PushCommError::AlreadySubscribed);
 
-        // Increase user subscribe count by check overflow
-        user_storage.user_subscribe_count += 1;
-        // Mark user as subscribed for a given channel
-        subscription_storage.is_subscribed = true;
+    // Increase user subscribe count by check overflow
+    user_storage.user_subscribe_count += 1;
+    // Mark user as subscribed for a given channel
+    subscription_storage.is_subscribed = true;
 
-        emit!(Subscribed {
-            user: user_storage.key(),
-            channel: channel,
-        });
+    emit!(Subscribed {
+        user: user_storage.key(),
+        channel: channel,
+    });
+
+    Ok(())
+}
+
+fn _unsubscribe(user_storage: &mut Account<UserStorage>, subscription_storage: &mut Account<Subscription>, channel: Pubkey) -> Result<()> {
+    require!(subscription_storage.is_subscribed == true, PushCommError::NotSubscribed);
+
+    // Decrease user subscribe count
+    user_storage.user_subscribe_count = user_storage
+    .user_subscribe_count
+    .checked_sub(1)
+    .ok_or(PushCommError::Underflow)?;
+    // Mark user as unsubscribed for a given channel
+    subscription_storage.is_subscribed = false;
+
+    emit!(Unsubscribed {
+        user: user_storage.key(),
+        channel: channel,
+    });
 
     Ok(())
 }
