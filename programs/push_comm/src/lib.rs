@@ -11,7 +11,7 @@ use crate::state::*;
 use crate::errors::*;
 use crate::events::*;
 
-declare_id!("38y1vrywbkV9xNUBQ2rdi6E1PNxj2EhWgakpN3zLtneu");
+declare_id!("7uczcz9GTYCneGpfNMBT1ccuFBGcLcF1seVGw9utaaw1");
 
 #[program]
 pub mod push_comm {
@@ -105,13 +105,13 @@ pub mod push_comm {
     pub fn subscribe(ctx: Context<SubscriptionCTX>, channel: Pubkey) -> Result<()> {
         // TO-DO : add + _addUser() function logic here
         _add_user(&mut ctx.accounts.storage, &mut ctx.accounts.comm_storage)?;
-        _subscribe(&mut ctx.accounts.storage, &mut ctx.accounts.subscription, channel)?;
+        _subscribe(&mut ctx.accounts.storage, &mut ctx.accounts.subscription, ctx.accounts.signer.key(), channel)?;
 
         Ok(())
     }
 
     pub fn unsubscribe(ctx: Context<SubscriptionCTX>, channel: Pubkey) -> Result<()>{
-        _unsubscribe(&mut ctx.accounts.storage, &mut ctx.accounts.subscription, channel)?;
+        _unsubscribe(&mut ctx.accounts.storage, &mut ctx.accounts.subscription, ctx.accounts.signer.key(), channel)?;
 
         Ok(())
     }
@@ -217,7 +217,7 @@ fn _add_user(user_storage: &mut Account<UserStorage>, comm_storage: &mut Account
     Ok(())
 }
 
-fn _subscribe(user_storage: &mut Account<UserStorage>, subscription_storage: &mut Account<Subscription>, channel: Pubkey) -> Result<()> {
+fn _subscribe(user_storage: &mut Account<UserStorage>, subscription_storage: &mut Account<Subscription>, user: Pubkey, channel: Pubkey) -> Result<()> {
     require!(subscription_storage.is_subscribed == false, PushCommError::AlreadySubscribed);
 
     // Increase user subscribe count by check overflow
@@ -226,14 +226,14 @@ fn _subscribe(user_storage: &mut Account<UserStorage>, subscription_storage: &mu
     subscription_storage.is_subscribed = true;
 
     emit!(Subscribed {
-        user: user_storage.key(),
+        user: user,
         channel: channel,
     });
 
     Ok(())
 }
 
-fn _unsubscribe(user_storage: &mut Account<UserStorage>, subscription_storage: &mut Account<Subscription>, channel: Pubkey) -> Result<()> {
+fn _unsubscribe(user_storage: &mut Account<UserStorage>, subscription_storage: &mut Account<Subscription>, user: Pubkey, channel: Pubkey) -> Result<()> {
     require!(subscription_storage.is_subscribed == true, PushCommError::NotSubscribed);
 
     // Decrease user subscribe count
@@ -245,7 +245,7 @@ fn _unsubscribe(user_storage: &mut Account<UserStorage>, subscription_storage: &
     subscription_storage.is_subscribed = false;
 
     emit!(Unsubscribed {
-        user: user_storage.key(),
+        user: user,
         channel: channel,
     });
 
