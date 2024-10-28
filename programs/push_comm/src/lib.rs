@@ -105,21 +105,7 @@ pub mod push_comm {
     pub fn subscribe(ctx: Context<SubscriptionCTX>, channel: Pubkey) -> Result<()> {
         // TO-DO : add + _addUser() function logic here
         _add_user(&mut ctx.accounts.storage, &mut ctx.accounts.comm_storage)?;
-        let user = &mut ctx.accounts.storage;
-        let subscription = &mut ctx.accounts.subscription;
-
-        require!(subscription.is_subscribed == false, PushCommError::AlreadySubscribed);
-
-        // Increase user subscribe count by check overflow
-        user.user_subscribe_count += 1;
-        // Mark user as subscribed for a given channel
-        subscription.is_subscribed = true;
-        
-
-        emit!(Subscribed {
-            user: ctx.accounts.signer.key(),
-            channel: ctx.accounts.channel.key(),
-        });
+        _subscribe(&mut ctx.accounts.storage, &mut ctx.accounts.subscription, channel)?;
 
         Ok(())
     }
@@ -244,6 +230,22 @@ fn _add_user(user_storage: &mut Account<UserStorage>, comm_storage: &mut Account
 
         comm_storage.user_count += 1;
     }
+    Ok(())
+}
+
+fn _subscribe(user_storage: &mut Account<UserStorage>, subscription_storage: &mut Account<Subscription>, channel: Pubkey) -> Result<()> {
+        require!(subscription_storage.is_subscribed == false, PushCommError::AlreadySubscribed);
+
+        // Increase user subscribe count by check overflow
+        user_storage.user_subscribe_count += 1;
+        // Mark user as subscribed for a given channel
+        subscription_storage.is_subscribed = true;
+
+        emit!(Subscribed {
+            user: user_storage.key(),
+            channel: channel,
+        });
+
     Ok(())
 }
 
