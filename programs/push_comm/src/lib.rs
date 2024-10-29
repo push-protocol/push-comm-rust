@@ -304,9 +304,6 @@ pub struct SubscriptionCTX<'info> {
         bump
     )]
     pub subscription: Account<'info, Subscription>,
-
-    /// CHECK: This account is not read or written in this instruction
-    pub channel: AccountInfo<'info>,
     
     #[account(mut, seeds = [PUSH_COMM_STORAGE], bump)]
     pub comm_storage: Account<'info, PushCommStorageV3>,
