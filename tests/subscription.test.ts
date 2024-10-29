@@ -147,7 +147,6 @@ describe("push_comm_subscription_tests", () => {
           const tx = await program.methods.subscribe(channel1.publicKey).accounts({
               storage: userStorageAccount,
               subscription: subscriptionAccount,
-              channel: channel1.publicKey,
               commStorage: storageAccount,
               signer: user1.publicKey,
               systemProgram: anchor.web3.SystemProgram.programId,
@@ -186,7 +185,6 @@ describe("push_comm_subscription_tests", () => {
           await program.methods.subscribe(channel1.publicKey).accounts({
           storage: userStorageAccount,
           subscription: subscriptionAccount,
-          channel: channel1.publicKey,
           commStorage: storageAccount,
           signer: user1.publicKey,
           systemProgram: anchor.web3.SystemProgram.programId,
@@ -213,7 +211,6 @@ describe("push_comm_subscription_tests", () => {
         await program.methods.subscribe(channel1.publicKey).accounts({
           storage: userStorageAccount,
           subscription: subscriptionAccount,
-          channel: channel1.publicKey,
           commStorage: storageAccount,
           signer: user1.publicKey,
           systemProgram: anchor.web3.SystemProgram.programId,
@@ -224,7 +221,6 @@ describe("push_comm_subscription_tests", () => {
           await program.methods.subscribe(channel1.publicKey).accounts({
             storage: userStorageAccount,
             subscription: subscriptionAccount,
-            channel: channel1.publicKey,
             commStorage: storageAccount,
             signer: user1.publicKey,
             systemProgram: anchor.web3.SystemProgram.programId,
@@ -261,7 +257,6 @@ describe("push_comm_subscription_tests", () => {
       await program.methods.subscribe(channel1.publicKey).accounts({
           storage: userStorageAccount,
           subscription: subscriptionAccount,
-          channel: channel1.publicKey,
           commStorage: storageAccount,
           signer: user1.publicKey,
           systemProgram: anchor.web3.SystemProgram.programId,
@@ -280,7 +275,6 @@ describe("push_comm_subscription_tests", () => {
       await program.methods.unsubscribe(channel1.publicKey).accounts({
           storage: userStorageAccount,
           subscription: subscriptionAccount,
-          channel: channel1.publicKey,
           commStorage: storageAccount,
           signer: user1.publicKey,
           systemProgram: anchor.web3.SystemProgram.programId,
@@ -306,7 +300,6 @@ describe("push_comm_subscription_tests", () => {
       await program.methods.subscribe(channel1.publicKey).accounts({
         storage: userStorageAccount,
         subscription: subscriptionAccount,
-        channel: channel1.publicKey,
         commStorage: storageAccount,
         signer: user1.publicKey,
         systemProgram: anchor.web3.SystemProgram.programId,
@@ -323,7 +316,6 @@ describe("push_comm_subscription_tests", () => {
       await program.methods.unsubscribe(channel1.publicKey).accounts({
         storage: userStorageAccount,
         subscription: subscriptionAccount,
-        channel: channel1.publicKey,
         commStorage: storageAccount,
         signer: user1.publicKey,
         systemProgram: anchor.web3.SystemProgram.programId,
@@ -351,7 +343,6 @@ describe("push_comm_subscription_tests", () => {
         await program.methods.unsubscribe(channel1.publicKey).accounts({
           storage: userStorageAccount,
           subscription: subscriptionAccount,
-          channel: channel1.publicKey,
           commStorage: storageAccount,
           signer: user1.publicKey,
           systemProgram: anchor.web3.SystemProgram.programId,
@@ -387,7 +378,6 @@ describe("push_comm_subscription_tests", () => {
       await program.methods.subscribe(channel1.publicKey).accounts({
           storage: userStorageAccount,
           subscription: subscriptionAccountFirst,
-          channel: channel1.publicKey,
           commStorage: storageAccount,
           signer: user1.publicKey,
           systemProgram: anchor.web3.SystemProgram.programId,
@@ -397,7 +387,6 @@ describe("push_comm_subscription_tests", () => {
       await program.methods.subscribe(channel2.publicKey).accounts({
           storage: userStorageAccount,
           subscription: subscriptionAccountSecond,
-          channel: channel2.publicKey,
           commStorage: storageAccount,
           signer: user1.publicKey,
           systemProgram: anchor.web3.SystemProgram.programId,
@@ -407,7 +396,6 @@ describe("push_comm_subscription_tests", () => {
       await program.methods.subscribe(channel3.publicKey).accounts({
           storage: userStorageAccount,
           subscription: subscriptionAccountThird,
-          channel: channel3.publicKey,
           commStorage: storageAccount,
           signer: user1.publicKey,
           systemProgram: anchor.web3.SystemProgram.programId,
@@ -441,7 +429,6 @@ describe("push_comm_subscription_tests", () => {
       await program.methods.subscribe(channel1.publicKey).accounts({
           storage: userStorageAccount,
           subscription: subscriptionAccountFirst,
-          channel: channel1.publicKey,
           commStorage: storageAccount,
           signer: user1.publicKey,
           systemProgram: anchor.web3.SystemProgram.programId,
@@ -451,7 +438,6 @@ describe("push_comm_subscription_tests", () => {
       await program.methods.subscribe(channel2.publicKey).accounts({
           storage: userStorageAccount,
           subscription: subscriptionAccountSecond,
-          channel: channel2.publicKey,
           commStorage: storageAccount,
           signer: user1.publicKey,
           systemProgram: anchor.web3.SystemProgram.programId,
@@ -461,7 +447,6 @@ describe("push_comm_subscription_tests", () => {
       await program.methods.subscribe(channel3.publicKey).accounts({
           storage: userStorageAccount,
           subscription: subscriptionAccountThird,
-          channel: channel3.publicKey,
           commStorage: storageAccount,
           signer: user1.publicKey,
           systemProgram: anchor.web3.SystemProgram.programId,
@@ -482,7 +467,6 @@ describe("push_comm_subscription_tests", () => {
       await program.methods.unsubscribe(channel1.publicKey).accounts({
           storage: userStorageAccount,
           subscription: subscriptionAccountFirst,
-          channel: channel1.publicKey,
           commStorage: storageAccount,
           signer: user1.publicKey,
           systemProgram: anchor.web3.SystemProgram.programId,
@@ -492,7 +476,6 @@ describe("push_comm_subscription_tests", () => {
       await program.methods.unsubscribe(channel2.publicKey).accounts({
           storage: userStorageAccount,
           subscription: subscriptionAccountSecond,
-          channel: channel2.publicKey,
           commStorage: storageAccount,
           signer: user1.publicKey,
           systemProgram: anchor.web3.SystemProgram.programId,
@@ -526,7 +509,6 @@ describe("push_comm_subscription_tests", () => {
       await program.methods.subscribe(channel1.publicKey).accounts({
           storage: userStorage1st,
           subscription: subscriptionAccountFirst,
-          channel: channel1.publicKey,
           commStorage: storageAccount,
           signer: user1.publicKey,
           systemProgram: anchor.web3.SystemProgram.programId,
@@ -536,7 +518,6 @@ describe("push_comm_subscription_tests", () => {
       await program.methods.subscribe(channel1.publicKey).accounts({
           storage: userStorage2nd,
           subscription: subscriptionAccountSecond,
-          channel: channel1.publicKey,
           commStorage: storageAccount,
           signer: user2.publicKey,
           systemProgram: anchor.web3.SystemProgram.programId,
@@ -546,7 +527,6 @@ describe("push_comm_subscription_tests", () => {
       await program.methods.subscribe(channel1.publicKey).accounts({
           storage: userStorage3rd,
           subscription: subscriptionAccountThird,
-          channel: channel1.publicKey,
           commStorage: storageAccount,
           signer: user3.publicKey,
           systemProgram: anchor.web3.SystemProgram.programId,
