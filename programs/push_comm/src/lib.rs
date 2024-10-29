@@ -11,7 +11,7 @@ use crate::state::*;
 use crate::errors::*;
 use crate::events::*;
 
-declare_id!("38y1vrywbkV9xNUBQ2rdi6E1PNxj2EhWgakpN3zLtneu");
+declare_id!("7uczcz9GTYCneGpfNMBT1ccuFBGcLcF1seVGw9utaaw1");
 
 #[program]
 pub mod push_comm {
