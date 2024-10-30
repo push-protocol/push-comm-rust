@@ -89,7 +89,8 @@ pub mod push_comm {
         emit!(ChannelAlias {
             chain_name: CHAIN_NAME.to_string(),
             chain_id: storage.chain_id,
-            channel_address: channel_address,
+            channel: ctx.accounts.signer.key(),
+            ethereum_channel_address: channel_address,
         });
         Ok(())
     }
@@ -287,7 +288,10 @@ pub struct AdminStorageUpdateCTX<'info> {
 #[derive(Accounts)]
 pub struct AliasVerificationCTX <'info > {
     #[account(seeds = [PUSH_COMM_STORAGE], bump)]
-    pub storage: Account<'info, PushCommStorageV3>
+    pub storage: Account<'info, PushCommStorageV3>,
+
+    #[account(signer)]
+    pub signer: Signer<'info>,
 }
 
 #[derive(Accounts)]
