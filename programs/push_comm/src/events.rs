@@ -4,8 +4,9 @@ use anchor_lang::prelude::*;
 #[event]
 pub struct ChannelAlias{
     pub chain_name: String,
-    pub chain_id: u64,
-    pub channel_address: String,
+    pub chain_cluster: String,
+    pub channel: Pubkey,
+    pub ethereum_channel_address: String,
 }
 #[event]
 pub struct AddDelegate{

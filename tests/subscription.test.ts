@@ -105,10 +105,10 @@ describe("push_comm_subscription_tests", () => {
   it("Is initialized!", async () => {
 
     const [storage, bump] = await anchor.web3.PublicKey.findProgramAddressSync([SEEDS.PUSH_COMM_STORAGE], program.programId);
-    const chainId = new anchor.BN(1);
+    const chainCluster = "devnet";
     const tx = await program.methods.initialize(
       pushAdmin.publicKey,
-      chainId,
+      chainCluster,
     ).accounts({
       storage: storage,
       signer: pushAdmin.publicKey,
@@ -118,7 +118,7 @@ describe("push_comm_subscription_tests", () => {
     // Fetch the initialized account and check initial values
     const accountData = await program.account.pushCommStorageV3.fetch(storage);
 
-    expect(accountData.chainId.toString()).to.equal(chainId.toString());
+    expect(accountData.chainCluster.toString()).to.equal(chainCluster.toString());
     expect(accountData.governance.toString()).to.eq(pushAdmin.publicKey.toString());
     expect(accountData.pushChannelAdmin.toString()).to.eq(pushAdmin.publicKey.toString());
 
@@ -147,7 +147,6 @@ describe("push_comm_subscription_tests", () => {
           const tx = await program.methods.subscribe(channel1.publicKey).accounts({
               storage: userStorageAccount,
               subscription: subscriptionAccount,
-              channel: channel1.publicKey,
               commStorage: storageAccount,
               signer: user1.publicKey,
               systemProgram: anchor.web3.SystemProgram.programId,
@@ -186,7 +185,6 @@ describe("push_comm_subscription_tests", () => {
           await program.methods.subscribe(channel1.publicKey).accounts({
           storage: userStorageAccount,
           subscription: subscriptionAccount,
-          channel: channel1.publicKey,
           commStorage: storageAccount,
           signer: user1.publicKey,
           systemProgram: anchor.web3.SystemProgram.programId,
@@ -204,7 +202,7 @@ describe("push_comm_subscription_tests", () => {
       expect(subscribedEvent.channel.toString()).to.equal(channel1.publicKey.toString());
       });
 
-      it ("Should not subscribe user1 twice", async () => {
+      it ("Should not revert when user1 subscribe twice", async () => {
         const [storageAccount, bump2nd] = await anchor.web3.PublicKey.findProgramAddressSync([SEEDS.PUSH_COMM_STORAGE], program.programId);
         const [userStorageAccount, bump1st] = await anchor.web3.PublicKey.findProgramAddressSync([SEEDS.USER_STORAGE, user1.publicKey.toBuffer()], program.programId);
         const [subscriptionAccount, bump3rd] = await anchor.web3.PublicKey.findProgramAddressSync([SEEDS.SUBSCRIPTION, user1.publicKey.toBuffer(), channel1.publicKey.toBuffer()], program.programId);
@@ -213,31 +211,35 @@ describe("push_comm_subscription_tests", () => {
         await program.methods.subscribe(channel1.publicKey).accounts({
           storage: userStorageAccount,
           subscription: subscriptionAccount,
-          channel: channel1.publicKey,
           commStorage: storageAccount,
           signer: user1.publicKey,
           systemProgram: anchor.web3.SystemProgram.programId,
         }).signers([user1]).rpc();
 
-        // User1 tries to subscribe to channel1 again
-        try{
-          await program.methods.subscribe(channel1.publicKey).accounts({
-            storage: userStorageAccount,
-            subscription: subscriptionAccount,
-            channel: channel1.publicKey,
-            commStorage: storageAccount,
-            signer: user1.publicKey,
-            systemProgram: anchor.web3.SystemProgram.programId,
-          }).signers([user1]).rpc();
-          assert.fail("Should not subscribe user1 twice");
-        } catch (_err){
-          assert.isTrue(_err instanceof anchor.AnchorError, "Error is not an Anchor Error");
-          const err: anchor.AnchorError = _err;
-          const expectedErrorMsg = ERRORS.AlreadySubscribed;
-          assert.strictEqual(err.error.errorMessage, expectedErrorMsg, `Error message should be ${expectedErrorMsg}`);
-          console.log("Error number:", err.error.errorCode);
-        }
+        let subscribedEvent: any = null;
         
+        const listener = program.addEventListener('Subscribed', (event, slot) => {
+          // console.log(`Slot ${slot}: Subscribed event - User: ${event.user}, Channel: ${event.channel}`);
+          subscribedEvent = event;
+        });
+
+        // User1 tries to subscribe to channel1 again
+        await program.methods.subscribe(channel1.publicKey).accounts({
+          storage: userStorageAccount,
+          subscription: subscriptionAccount,
+          commStorage: storageAccount,
+          signer: user1.publicKey,
+          systemProgram: anchor.web3.SystemProgram.programId,
+        }).signers([user1]).rpc();
+
+        // Waiting to capture event
+        await new Promise((resolve) => setTimeout(resolve, 5000));
+
+        // Removing the event listener
+        await program.removeEventListener(listener);
+
+        // Assert that the event was emitted with correct parameters
+        expect(subscribedEvent).to.be.null;
       });
 
   });
@@ -261,7 +263,6 @@ describe("push_comm_subscription_tests", () => {
       await program.methods.subscribe(channel1.publicKey).accounts({
           storage: userStorageAccount,
           subscription: subscriptionAccount,
-          channel: channel1.publicKey,
           commStorage: storageAccount,
           signer: user1.publicKey,
           systemProgram: anchor.web3.SystemProgram.programId,
@@ -280,7 +281,6 @@ describe("push_comm_subscription_tests", () => {
       await program.methods.unsubscribe(channel1.publicKey).accounts({
           storage: userStorageAccount,
           subscription: subscriptionAccount,
-          channel: channel1.publicKey,
           commStorage: storageAccount,
           signer: user1.publicKey,
           systemProgram: anchor.web3.SystemProgram.programId,
@@ -306,7 +306,6 @@ describe("push_comm_subscription_tests", () => {
       await program.methods.subscribe(channel1.publicKey).accounts({
         storage: userStorageAccount,
         subscription: subscriptionAccount,
-        channel: channel1.publicKey,
         commStorage: storageAccount,
         signer: user1.publicKey,
         systemProgram: anchor.web3.SystemProgram.programId,
@@ -323,7 +322,6 @@ describe("push_comm_subscription_tests", () => {
       await program.methods.unsubscribe(channel1.publicKey).accounts({
         storage: userStorageAccount,
         subscription: subscriptionAccount,
-        channel: channel1.publicKey,
         commStorage: storageAccount,
         signer: user1.publicKey,
         systemProgram: anchor.web3.SystemProgram.programId,
@@ -341,22 +339,37 @@ describe("push_comm_subscription_tests", () => {
     expect(unsubscribedEvent.channel.toString()).to.equal(channel1.publicKey.toString());
     });
 
-    it("Should not unsubscribe user1 without subscribing", async () => {
+    it("Should not revert when user1 unsubscribe without subscribing", async () => {
       const [storageAccount, bump2nd] = await anchor.web3.PublicKey.findProgramAddressSync([SEEDS.PUSH_COMM_STORAGE], program.programId);
       const [userStorageAccount, bump1st] = await anchor.web3.PublicKey.findProgramAddressSync([SEEDS.USER_STORAGE, user1.publicKey.toBuffer()], program.programId);
       const [subscriptionAccount, bump3rd] = await anchor.web3.PublicKey.findProgramAddressSync([SEEDS.SUBSCRIPTION, user1.publicKey.toBuffer(), channel1.publicKey.toBuffer()], program.programId);
       
+      let unsubscribedEvent: any = null;
+      
+      const listener = program.addEventListener('Unsubscribed', (event, slot) => {
+        // console.log(`Slot ${slot}: Unsubscribed event - User: ${event.user}, Channel: ${event.channel}`);
+        unsubscribedEvent = event;
+      });
+
       // User1 tries to unsubscribe without subscribing
       try{
         await program.methods.unsubscribe(channel1.publicKey).accounts({
           storage: userStorageAccount,
           subscription: subscriptionAccount,
-          channel: channel1.publicKey,
           commStorage: storageAccount,
           signer: user1.publicKey,
           systemProgram: anchor.web3.SystemProgram.programId,
         }).signers([user1]).rpc();
-        assert.fail("Should not unsubscribe user1 without subscribing");
+        
+        // Waiting to capture event
+    await new Promise((resolve) => setTimeout(resolve, 5000));
+
+    // Removing the event listener
+    await program.removeEventListener(listener);
+
+    // Assert that the event was emitted with correct parameters
+    expect(unsubscribedEvent).to.be.null;
+
       } catch (_err){
         assert.isTrue(_err instanceof anchor.AnchorError, "Error is not an Anchor Error");
         const err: anchor.AnchorError = _err;
@@ -387,7 +400,6 @@ describe("push_comm_subscription_tests", () => {
       await program.methods.subscribe(channel1.publicKey).accounts({
           storage: userStorageAccount,
           subscription: subscriptionAccountFirst,
-          channel: channel1.publicKey,
           commStorage: storageAccount,
           signer: user1.publicKey,
           systemProgram: anchor.web3.SystemProgram.programId,
@@ -397,7 +409,6 @@ describe("push_comm_subscription_tests", () => {
       await program.methods.subscribe(channel2.publicKey).accounts({
           storage: userStorageAccount,
           subscription: subscriptionAccountSecond,
-          channel: channel2.publicKey,
           commStorage: storageAccount,
           signer: user1.publicKey,
           systemProgram: anchor.web3.SystemProgram.programId,
@@ -407,7 +418,6 @@ describe("push_comm_subscription_tests", () => {
       await program.methods.subscribe(channel3.publicKey).accounts({
           storage: userStorageAccount,
           subscription: subscriptionAccountThird,
-          channel: channel3.publicKey,
           commStorage: storageAccount,
           signer: user1.publicKey,
           systemProgram: anchor.web3.SystemProgram.programId,
@@ -441,7 +451,6 @@ describe("push_comm_subscription_tests", () => {
       await program.methods.subscribe(channel1.publicKey).accounts({
           storage: userStorageAccount,
           subscription: subscriptionAccountFirst,
-          channel: channel1.publicKey,
           commStorage: storageAccount,
           signer: user1.publicKey,
           systemProgram: anchor.web3.SystemProgram.programId,
@@ -451,7 +460,6 @@ describe("push_comm_subscription_tests", () => {
       await program.methods.subscribe(channel2.publicKey).accounts({
           storage: userStorageAccount,
           subscription: subscriptionAccountSecond,
-          channel: channel2.publicKey,
           commStorage: storageAccount,
           signer: user1.publicKey,
           systemProgram: anchor.web3.SystemProgram.programId,
@@ -461,7 +469,6 @@ describe("push_comm_subscription_tests", () => {
       await program.methods.subscribe(channel3.publicKey).accounts({
           storage: userStorageAccount,
           subscription: subscriptionAccountThird,
-          channel: channel3.publicKey,
           commStorage: storageAccount,
           signer: user1.publicKey,
           systemProgram: anchor.web3.SystemProgram.programId,
@@ -482,7 +489,6 @@ describe("push_comm_subscription_tests", () => {
       await program.methods.unsubscribe(channel1.publicKey).accounts({
           storage: userStorageAccount,
           subscription: subscriptionAccountFirst,
-          channel: channel1.publicKey,
           commStorage: storageAccount,
           signer: user1.publicKey,
           systemProgram: anchor.web3.SystemProgram.programId,
@@ -492,7 +498,6 @@ describe("push_comm_subscription_tests", () => {
       await program.methods.unsubscribe(channel2.publicKey).accounts({
           storage: userStorageAccount,
           subscription: subscriptionAccountSecond,
-          channel: channel2.publicKey,
           commStorage: storageAccount,
           signer: user1.publicKey,
           systemProgram: anchor.web3.SystemProgram.programId,
@@ -526,7 +531,6 @@ describe("push_comm_subscription_tests", () => {
       await program.methods.subscribe(channel1.publicKey).accounts({
           storage: userStorage1st,
           subscription: subscriptionAccountFirst,
-          channel: channel1.publicKey,
           commStorage: storageAccount,
           signer: user1.publicKey,
           systemProgram: anchor.web3.SystemProgram.programId,
@@ -536,7 +540,6 @@ describe("push_comm_subscription_tests", () => {
       await program.methods.subscribe(channel1.publicKey).accounts({
           storage: userStorage2nd,
           subscription: subscriptionAccountSecond,
-          channel: channel1.publicKey,
           commStorage: storageAccount,
           signer: user2.publicKey,
           systemProgram: anchor.web3.SystemProgram.programId,
@@ -546,7 +549,6 @@ describe("push_comm_subscription_tests", () => {
       await program.methods.subscribe(channel1.publicKey).accounts({
           storage: userStorage3rd,
           subscription: subscriptionAccountThird,
-          channel: channel1.publicKey,
           commStorage: storageAccount,
           signer: user3.publicKey,
           systemProgram: anchor.web3.SystemProgram.programId,

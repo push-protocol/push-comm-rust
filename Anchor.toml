@@ -5,13 +5,13 @@ seeds = false
 skip-lint = false
 
 [programs.localnet]
-push_comm = "38y1vrywbkV9xNUBQ2rdi6E1PNxj2EhWgakpN3zLtneu"
+push_comm = "7uczcz9GTYCneGpfNMBT1ccuFBGcLcF1seVGw9utaaw1"
 
 [registry]
 url = "https://api.apr.dev"
 
 [provider]
-cluster = "Localnet"
+cluster = "http://127.0.0.1:8899"
 wallet = "/Users/mdzaryabafser/.config/solana/id.json"
 
 [scripts]

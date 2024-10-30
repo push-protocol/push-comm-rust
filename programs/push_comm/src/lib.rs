@@ -19,26 +19,18 @@ pub mod push_comm {
 
     pub fn initialize(ctx: Context<InitializeCTX>, 
         push_admin: Pubkey, 
-        chain_id: u64,
+        chain_cluster: String,
     ) -> Result<()> {
         let storage = &mut ctx.accounts.storage;
         storage.governance = push_admin;
         storage.push_channel_admin = push_admin;
-        storage.chain_id = chain_id;
+        storage.chain_cluster = chain_cluster;
         Ok(())
     }
 
 /**
  * ADMIN FUNCTIONS
- */
-    pub fn set_core_address(ctx: Context<AdminStorageUpdateCTX>, //@audit - TBD IF NEEDED 
-        push_core_address: Pubkey,
-        ) -> Result <()> {
-            let storage = &mut ctx.accounts.storage;
-            storage.push_core_address = push_core_address;
-            Ok(())
-        }
-    
+ */ 
     pub fn set_governance_address(ctx: Context<AdminStorageUpdateCTX>,
         governance: Pubkey,
     ) -> Result<()> {
@@ -96,52 +88,22 @@ pub mod push_comm {
 
         emit!(ChannelAlias {
             chain_name: CHAIN_NAME.to_string(),
-            chain_id: storage.chain_id,
-            channel_address: channel_address,
+            chain_cluster: storage.chain_cluster.clone(),
+            channel: ctx.accounts.signer.key(),
+            ethereum_channel_address: channel_address,
         });
         Ok(())
     }
 
     pub fn subscribe(ctx: Context<SubscriptionCTX>, channel: Pubkey) -> Result<()> {
-        // TO-DO : add + _addUser() function logic here
         _add_user(&mut ctx.accounts.storage, &mut ctx.accounts.comm_storage)?;
-        let user = &mut ctx.accounts.storage;
-        let subscription = &mut ctx.accounts.subscription;
-
-        require!(subscription.is_subscribed == false, PushCommError::AlreadySubscribed);
-
-        // Increase user subscribe count by check overflow
-        user.user_subscribe_count += 1;
-        // Mark user as subscribed for a given channel
-        subscription.is_subscribed = true;
-        
-
-        emit!(Subscribed {
-            user: ctx.accounts.signer.key(),
-            channel: ctx.accounts.channel.key(),
-        });
+        _subscribe(&mut ctx.accounts.storage, &mut ctx.accounts.subscription, ctx.accounts.signer.key(), channel)?;
 
         Ok(())
     }
 
     pub fn unsubscribe(ctx: Context<SubscriptionCTX>, channel: Pubkey) -> Result<()>{
-        let user = &mut ctx.accounts.storage;
-        let subscription = &mut ctx.accounts.subscription;
-
-        require!(subscription.is_subscribed == true, PushCommError::NotSubscribed);
-
-        // Decrease user subscribe count
-        user.user_subscribe_count = user
-        .user_subscribe_count
-        .checked_sub(1)
-        .ok_or(PushCommError::Underflow)?;
-        // Mark user as unsubscribed for a given channel
-        subscription.is_subscribed = false;
-
-        emit!(Unsubscribed {
-            user: ctx.accounts.signer.key(),
-            channel: ctx.accounts.channel.key(),
-        });
+        _unsubscribe(&mut ctx.accounts.storage, &mut ctx.accounts.subscription, ctx.accounts.signer.key(), channel)?;
 
         Ok(())
     }
@@ -174,12 +136,20 @@ pub mod push_comm {
     }
 
     // Notification-Specific Functions
-    pub fn add_delegate(ctx: Context<DelegateNotifSenders>,
-        delegate: Pubkey
-    ) -> Result<()>{
-        // TO-DO :added _subscribe() function here
+    pub fn add_delegate(ctx: Context<DelegateNotifSenders>, delegate: Pubkey) -> Result<()> {
         let storage = &mut ctx.accounts.storage;
-        require!( !storage.is_delegate, PushCommError::DelegateAlreadyAdded );
+        require!( !storage.is_delegate, PushCommError::DelegateAlreadyAdded);
+    
+        // Call _add_user to activate the user in comm_storage if necessary
+        _add_user(&mut ctx.accounts.delegate_storage, &mut ctx.accounts.comm_storage)?;
+    
+        // Call _subscribe to subscribe the delegate to the channel
+        _subscribe(
+            &mut ctx.accounts.delegate_storage,
+            &mut ctx.accounts.subscription,
+            delegate,
+            ctx.accounts.signer.key()
+        )?;
 
         storage.channel = ctx.accounts.signer.key();
         storage.delegate = delegate;
@@ -189,6 +159,7 @@ pub mod push_comm {
             channel: ctx.accounts.signer.key(),
             delegate: ctx.accounts.storage.delegate,
         });
+
         Ok(())
     }
 
@@ -210,24 +181,27 @@ pub mod push_comm {
         Ok(())
     }
 
-    pub fn send_notification(ctx: Context<SendNotificationCTX>,
+    pub fn send_notification(
+        ctx: Context<SendNotificationCTX>,
         channel: Pubkey,
         recipient: Pubkey,
         message: Vec<u8>,
     ) -> Result<()> {
-            let caller = &ctx.accounts.signer;
-            let delegate_storage = &ctx.accounts.delegate_storage;
-
-            let is_valid = (delegate_storage.delegate == caller.key() && delegate_storage.is_delegate);
-
-            if is_valid {
-                emit!(SendNotification {
-                    channel: channel,
-                    recipient,
-                    message,
-                });
-            }
-
+        let caller = &ctx.accounts.signer;
+        let delegate_storage = &ctx.accounts.delegate_storage;
+    
+        // Check if the caller is a valid delegate or the channel itself
+        let is_valid = (delegate_storage.delegate == caller.key() && delegate_storage.is_delegate)
+            || (caller.key() == channel && !delegate_storage.is_delegate);
+    
+        if is_valid {
+            emit!(SendNotification {
+                channel: channel,
+                recipient,
+                message,
+            });
+        }
+    
         Ok(())
     }
 
@@ -244,6 +218,44 @@ fn _add_user(user_storage: &mut Account<UserStorage>, comm_storage: &mut Account
 
         comm_storage.user_count += 1;
     }
+    Ok(())
+}
+
+fn _subscribe(user_storage: &mut Account<UserStorage>, subscription_storage: &mut Account<Subscription>, user: Pubkey, channel: Pubkey) -> Result<()> {
+    if !subscription_storage.is_subscribed {
+
+        // Increase user subscribe count by check overflow
+        user_storage.user_subscribe_count += 1;
+        // Mark user as subscribed for a given channel
+        subscription_storage.is_subscribed = true;
+
+        emit!(Subscribed {
+            user: user,
+            channel: channel,
+        });
+    }
+
+    Ok(())
+}
+
+fn _unsubscribe(user_storage: &mut Account<UserStorage>, subscription_storage: &mut Account<Subscription>, user: Pubkey, channel: Pubkey) -> Result<()> {
+    if subscription_storage.is_subscribed {
+
+        // Decrease user subscribe count
+        user_storage.user_subscribe_count = user_storage
+        .user_subscribe_count
+        .checked_sub(1)
+        .ok_or(PushCommError::Underflow)?;
+        // Mark user as unsubscribed for a given channel
+        subscription_storage.is_subscribed = false;
+
+        emit!(Unsubscribed {
+            user: user,
+            channel: channel,
+        });
+
+    }
+
     Ok(())
 }
 
@@ -276,7 +288,10 @@ pub struct AdminStorageUpdateCTX<'info> {
 #[derive(Accounts)]
 pub struct AliasVerificationCTX <'info > {
     #[account(seeds = [PUSH_COMM_STORAGE], bump)]
-    pub storage: Account<'info, PushCommStorageV3>
+    pub storage: Account<'info, PushCommStorageV3>,
+
+    #[account(signer)]
+    pub signer: Signer<'info>,
 }
 
 #[derive(Accounts)]
@@ -299,9 +314,6 @@ pub struct SubscriptionCTX<'info> {
         bump
     )]
     pub subscription: Account<'info, Subscription>,
-
-    /// CHECK: This account is not read or written in this instruction
-    pub channel: AccountInfo<'info>,
     
     #[account(mut, seeds = [PUSH_COMM_STORAGE], bump)]
     pub comm_storage: Account<'info, PushCommStorageV3>,
@@ -342,6 +354,27 @@ pub struct DelegateNotifSenders <'info>{
         bump )]
     pub storage: Account<'info, DelegatedNotificationSenders>,
 
+    #[account(
+        init_if_needed,
+        payer = signer,
+        space = 8 + 1 + 8 + 8, // discriminator + bool + u64 + u64
+        seeds = [USER_STORAGE, delegate.key().as_ref()],
+        bump
+    )]
+    pub delegate_storage: Account<'info, UserStorage>,
+
+    #[account(
+        init_if_needed,
+        payer = signer,
+        space = 8 + 1, // discriminator + bool
+        seeds = [SUBSCRIPTION, delegate.key().as_ref(), signer.key().as_ref()],
+        bump
+    )]
+    pub subscription: Account<'info, Subscription>,
+    
+    #[account(mut, seeds = [PUSH_COMM_STORAGE], bump)]
+    pub comm_storage: Account<'info, PushCommStorageV3>,
+
     #[account(mut)]
     pub signer: Signer<'info>,
     pub system_program: Program<'info, System>,
@@ -350,9 +383,11 @@ pub struct DelegateNotifSenders <'info>{
 #[derive(Accounts)]
 #[instruction(channel: Pubkey)]
 pub struct SendNotificationCTX<'info> {
-    #[account(seeds = [DELEGATE, 
-        channel.key().as_ref(),
-        signer.key().as_ref()],
+    #[account(
+        init_if_needed,
+        payer = signer,
+        space = 8 + 32 + 32 + 1, // discriminator + channel + delegate + bool
+        seeds = [DELEGATE, channel.key().as_ref(), signer.key().as_ref()],
         bump)]
     pub delegate_storage: Account<'info, DelegatedNotificationSenders>,
 

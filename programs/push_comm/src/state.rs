@@ -7,9 +7,8 @@ use anchor_lang::prelude::*;
 pub struct PushCommStorageV3 {
     pub governance: Pubkey,
     pub push_channel_admin: Pubkey,
-    pub chain_id: u64,
+    pub chain_cluster: String, // devnet, testnet or mainnet-beta
     pub user_count: u64,
-    pub push_core_address: Pubkey,
     pub push_token_ntt: Pubkey,
     pub paused: bool,
 }
@@ -43,7 +42,7 @@ pub struct UserNotificationSettings{
 
 // Constant States
     pub const NAME: &str = "Push Comm V3"; // Check if this is actually needed
-    pub const CHAIN_NAME: &str = "Solana Mainnet"; 
+    pub const CHAIN_NAME: &str = "SOLANA"; 
     pub const MAX_NOTIF_SETTINGS_LENGTH: usize = 100; // Adjust as needed
 
 // Constants for Seeds
