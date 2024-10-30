@@ -188,24 +188,27 @@ pub mod push_comm {
         Ok(())
     }
 
-    pub fn send_notification(ctx: Context<SendNotificationCTX>,
+    pub fn send_notification(
+        ctx: Context<SendNotificationCTX>,
         channel: Pubkey,
         recipient: Pubkey,
         message: Vec<u8>,
     ) -> Result<()> {
-            let caller = &ctx.accounts.signer;
-            let delegate_storage = &ctx.accounts.delegate_storage;
-
-            let is_valid = (delegate_storage.delegate == caller.key() && delegate_storage.is_delegate);
-
-            if is_valid {
-                emit!(SendNotification {
-                    channel: channel,
-                    recipient,
-                    message,
-                });
-            }
-
+        let caller = &ctx.accounts.signer;
+        let delegate_storage = &ctx.accounts.delegate_storage;
+    
+        // Check if the caller is a valid delegate or the channel itself
+        let is_valid = (delegate_storage.delegate == caller.key() && delegate_storage.is_delegate)
+            || (caller.key() == channel && !delegate_storage.is_delegate);
+    
+        if is_valid {
+            emit!(SendNotification {
+                channel: channel,
+                recipient,
+                message,
+            });
+        }
+    
         Ok(())
     }
 
@@ -384,9 +387,11 @@ pub struct DelegateNotifSenders <'info>{
 #[derive(Accounts)]
 #[instruction(channel: Pubkey)]
 pub struct SendNotificationCTX<'info> {
-    #[account(seeds = [DELEGATE, 
-        channel.key().as_ref(),
-        signer.key().as_ref()],
+    #[account(
+        init_if_needed,
+        payer = signer,
+        space = 8 + 32 + 32 + 1, // discriminator + channel + delegate + bool
+        seeds = [DELEGATE, channel.key().as_ref(), signer.key().as_ref()],
         bump)]
     pub delegate_storage: Account<'info, DelegatedNotificationSenders>,
 
