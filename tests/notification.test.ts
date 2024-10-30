@@ -640,22 +640,6 @@ describe("push_comm_subscription_tests", () => {
 
       it("Notification to USER1 by Channel1 for Channel 1", async () => {
         const [delegateStroage, bump] = await anchor.web3.PublicKey.findProgramAddressSync([SEEDS.DELEGATE, channel1.publicKey.toBuffer(), channel1.publicKey.toBuffer()], program.programId);
-        const [storageAccount] = await anchor.web3.PublicKey.findProgramAddressSync([SEEDS.PUSH_COMM_STORAGE], program.programId);
-        const [delegateStorageAccount] = await anchor.web3.PublicKey.findProgramAddressSync([SEEDS.USER_STORAGE, channel1.publicKey.toBuffer()], program.programId);
-        const [subscriptionAccount] = await anchor.web3.PublicKey.findProgramAddressSync([SEEDS.SUBSCRIPTION, channel1.publicKey.toBuffer(), channel1.publicKey.toBuffer()], program.programId);
-        
-                // Initialize delegate_storage by adding delegate
-        await program.methods.addDelegate(channel1.publicKey)
-        .accounts({
-          storage: delegateStroage,
-          signer: channel1.publicKey,
-          commStorage: storageAccount,
-          delegateStorage: delegateStorageAccount,
-          subscription: subscriptionAccount,
-          systemProgram: anchor.web3.SystemProgram.programId,
-        })
-        .signers([channel1])
-        .rpc();
 
         // Prepare notification data
         const notificationIdentity = Buffer.from("Test notification from delegate");
@@ -729,7 +713,7 @@ describe("push_comm_subscription_tests", () => {
         expect(sendNotificationEvent).to.be.null;
       });
 
-      it("Send Notification Emit shouldn't work if channel1 has not added itself as a delegate first", async () => {
+      it("Send Notification Emit should work if channel1 has not added itself as a delegate first", async () => {
         const [delegateStorage] = await anchor.web3.PublicKey.findProgramAddressSync(
           [SEEDS.DELEGATE, channel1.publicKey.toBuffer(), channel1.publicKey.toBuffer()],
           program.programId
@@ -755,8 +739,10 @@ describe("push_comm_subscription_tests", () => {
         await new Promise((resolve) => setTimeout(resolve, 1000));
         await program.removeEventListener(listener);
       
-        // Assert that no SendNotification event was emitted
-        expect(sendNotificationEvent).to.be.null;
+        // Assert that SendNotification event was emitted
+        expect(sendNotificationEvent.recipient.toString()).to.eq(user1.publicKey.toString());
+        expect(sendNotificationEvent.channel.toString()).to.eq(channel1.publicKey.toString());
+        expect(sendNotificationEvent.message.toString()).to.eq(notificationMessage.toString());
       });
 
       it("Attempt to send notification after delegate is removed should fail", async () => {
