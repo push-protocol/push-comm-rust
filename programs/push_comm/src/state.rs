@@ -42,7 +42,7 @@ pub struct UserNotificationSettings{
 
 // Constant States
     pub const NAME: &str = "Push Comm V3"; // Check if this is actually needed
-    pub const CHAIN_NAME: &str = "Solana Mainnet"; 
+    pub const CHAIN_NAME: &str = "SOLANA"; 
     pub const MAX_NOTIF_SETTINGS_LENGTH: usize = 100; // Adjust as needed
 
 // Constants for Seeds
