@@ -19,12 +19,12 @@ pub mod push_comm {
 
     pub fn initialize(ctx: Context<InitializeCTX>, 
         push_admin: Pubkey, 
-        chain_id: u64,
+        chain_cluster: String,
     ) -> Result<()> {
         let storage = &mut ctx.accounts.storage;
         storage.governance = push_admin;
         storage.push_channel_admin = push_admin;
-        storage.chain_id = chain_id;
+        storage.chain_cluster = chain_cluster;
         Ok(())
     }
 
@@ -88,7 +88,7 @@ pub mod push_comm {
 
         emit!(ChannelAlias {
             chain_name: CHAIN_NAME.to_string(),
-            chain_id: storage.chain_id,
+            chain_cluster: storage.chain_cluster.clone(),
             channel: ctx.accounts.signer.key(),
             ethereum_channel_address: channel_address,
         });

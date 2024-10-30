@@ -4,7 +4,7 @@ use anchor_lang::prelude::*;
 #[event]
 pub struct ChannelAlias{
     pub chain_name: String,
-    pub chain_id: u64,
+    pub chain_cluster: String,
     pub channel: Pubkey,
     pub ethereum_channel_address: String,
 }

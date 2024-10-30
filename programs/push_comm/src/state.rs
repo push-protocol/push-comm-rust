@@ -7,7 +7,7 @@ use anchor_lang::prelude::*;
 pub struct PushCommStorageV3 {
     pub governance: Pubkey,
     pub push_channel_admin: Pubkey,
-    pub chain_id: u64,
+    pub chain_cluster: String, // localnet, devnet or mainnet
     pub user_count: u64,
     pub push_token_ntt: Pubkey,
     pub paused: bool,
