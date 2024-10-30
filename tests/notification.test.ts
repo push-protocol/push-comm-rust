@@ -147,10 +147,17 @@ describe("push_comm_subscription_tests", () => {
     it("Channel1 adds delegate1", async () => {
       const [delegateStroage, bump] = await anchor.web3.PublicKey.findProgramAddressSync([SEEDS.DELEGATE, channel1.publicKey.toBuffer(), delegate1.publicKey.toBuffer()], program.programId);
 
+      const [storageAccount, bump2nd] = await anchor.web3.PublicKey.findProgramAddressSync([SEEDS.PUSH_COMM_STORAGE], program.programId);
+      const [delegateStorageAccount, bump1st] = await anchor.web3.PublicKey.findProgramAddressSync([SEEDS.USER_STORAGE, delegate1.publicKey.toBuffer()], program.programId);
+      const [subscriptionAccount, bump3rd] = await anchor.web3.PublicKey.findProgramAddressSync([SEEDS.SUBSCRIPTION, delegate1.publicKey.toBuffer(), channel1.publicKey.toBuffer()], program.programId);
+          
       // Initialize delegate_storage by adding delegate1
       await program.methods.addDelegate(delegate1.publicKey).accounts({
         storage: delegateStroage,
         signer: channel1.publicKey,
+        commStorage: storageAccount,
+        delegateStorage: delegateStorageAccount,
+        subscription: subscriptionAccount,
         systemProgram: anchor.web3.SystemProgram.programId,
       }).signers([channel1]).rpc();
 
@@ -164,11 +171,17 @@ describe("push_comm_subscription_tests", () => {
 
     it("Channel1 removes delegate1", async () => {
       const [delegateStroage, bump] = await anchor.web3.PublicKey.findProgramAddressSync([SEEDS.DELEGATE, channel1.publicKey.toBuffer(), delegate1.publicKey.toBuffer()], program.programId);
+      const [storageAccount, bump2nd] = await anchor.web3.PublicKey.findProgramAddressSync([SEEDS.PUSH_COMM_STORAGE], program.programId);
+      const [delegateStorageAccount, bump1st] = await anchor.web3.PublicKey.findProgramAddressSync([SEEDS.USER_STORAGE, delegate1.publicKey.toBuffer()], program.programId);
+      const [subscriptionAccount, bump3rd] = await anchor.web3.PublicKey.findProgramAddressSync([SEEDS.SUBSCRIPTION, delegate1.publicKey.toBuffer(), channel1.publicKey.toBuffer()], program.programId);
 
       // Initialize delegate_storage by adding delegate1
       await program.methods.addDelegate(delegate1.publicKey).accounts({
         storage: delegateStroage,
         signer: channel1.publicKey,
+        commStorage: storageAccount,
+        delegateStorage: delegateStorageAccount,
+        subscription: subscriptionAccount,
         systemProgram: anchor.web3.SystemProgram.programId,
       }).signers([channel1]).rpc();
 
@@ -182,6 +195,9 @@ describe("push_comm_subscription_tests", () => {
       await program.methods.removeDelegate(delegate1.publicKey).accounts({
         storage: delegateStroage,
         signer: channel1.publicKey,
+        commStorage: storageAccount,
+        delegateStorage: delegateStorageAccount,
+        subscription: subscriptionAccount,
         systemProgram: anchor.web3.SystemProgram.programId,
       }).signers([channel1]).rpc();
 
@@ -196,10 +212,19 @@ describe("push_comm_subscription_tests", () => {
       const [delegateStroage] = await anchor.web3.PublicKey.findProgramAddressSync([SEEDS.DELEGATE, channel1.publicKey.toBuffer(), delegate1.publicKey.toBuffer()], program.programId);
       const [delegateStroage2nd] = await anchor.web3.PublicKey.findProgramAddressSync([SEEDS.DELEGATE, channel1.publicKey.toBuffer(), delegate2.publicKey.toBuffer()], program.programId);
 
+      const [storageAccount] = await anchor.web3.PublicKey.findProgramAddressSync([SEEDS.PUSH_COMM_STORAGE], program.programId);
+      const [delegateStorageAccount1] = await anchor.web3.PublicKey.findProgramAddressSync([SEEDS.USER_STORAGE, delegate1.publicKey.toBuffer()], program.programId);
+      const [subscriptionAccount1] = await anchor.web3.PublicKey.findProgramAddressSync([SEEDS.SUBSCRIPTION, delegate1.publicKey.toBuffer(), channel1.publicKey.toBuffer()], program.programId);
+      const [delegateStorageAccount2] = await anchor.web3.PublicKey.findProgramAddressSync([SEEDS.USER_STORAGE, delegate2.publicKey.toBuffer()], program.programId);
+      const [subscriptionAccount2] = await anchor.web3.PublicKey.findProgramAddressSync([SEEDS.SUBSCRIPTION, delegate2.publicKey.toBuffer(), channel1.publicKey.toBuffer()], program.programId);
+
       // Initialize delegate_storage by adding delegate1
       await program.methods.addDelegate(delegate1.publicKey).accounts({
         storage: delegateStroage,
         signer: channel1.publicKey,
+        commStorage: storageAccount,
+        delegateStorage: delegateStorageAccount1,
+        subscription: subscriptionAccount1,
         systemProgram: anchor.web3.SystemProgram.programId,
       }).signers([channel1]).rpc();
     
@@ -207,6 +232,9 @@ describe("push_comm_subscription_tests", () => {
       await program.methods.addDelegate(delegate2.publicKey).accounts({
         storage: delegateStroage2nd,
         signer: channel1.publicKey,
+        commStorage: storageAccount,
+        delegateStorage: delegateStorageAccount2,
+        subscription: subscriptionAccount2,
         systemProgram: anchor.web3.SystemProgram.programId,
       }).signers([channel1]).rpc();
 
@@ -226,10 +254,19 @@ describe("push_comm_subscription_tests", () => {
       const [delegateStroage] = await anchor.web3.PublicKey.findProgramAddressSync([SEEDS.DELEGATE, channel1.publicKey.toBuffer(), delegate1.publicKey.toBuffer()], program.programId);
       const [delegateStroage2nd] = await anchor.web3.PublicKey.findProgramAddressSync([SEEDS.DELEGATE, channel1.publicKey.toBuffer(), delegate2.publicKey.toBuffer()], program.programId);
 
+      const [storageAccount] = await anchor.web3.PublicKey.findProgramAddressSync([SEEDS.PUSH_COMM_STORAGE], program.programId);
+      const [delegateStorageAccount1] = await anchor.web3.PublicKey.findProgramAddressSync([SEEDS.USER_STORAGE, delegate1.publicKey.toBuffer()], program.programId);
+      const [subscriptionAccount1] = await anchor.web3.PublicKey.findProgramAddressSync([SEEDS.SUBSCRIPTION, delegate1.publicKey.toBuffer(), channel1.publicKey.toBuffer()], program.programId);
+      const [delegateStorageAccount2] = await anchor.web3.PublicKey.findProgramAddressSync([SEEDS.USER_STORAGE, delegate2.publicKey.toBuffer()], program.programId);
+      const [subscriptionAccount2] = await anchor.web3.PublicKey.findProgramAddressSync([SEEDS.SUBSCRIPTION, delegate2.publicKey.toBuffer(), channel1.publicKey.toBuffer()], program.programId);
+
       // Initialize delegate_storage by adding delegate1
       await program.methods.addDelegate(delegate1.publicKey).accounts({
         storage: delegateStroage,
         signer: channel1.publicKey,
+        commStorage: storageAccount,
+        delegateStorage: delegateStorageAccount1,
+        subscription: subscriptionAccount1,
         systemProgram: anchor.web3.SystemProgram.programId,
       }).signers([channel1]).rpc();
     
@@ -237,6 +274,9 @@ describe("push_comm_subscription_tests", () => {
       await program.methods.addDelegate(delegate2.publicKey).accounts({
         storage: delegateStroage2nd,
         signer: channel1.publicKey,
+        commStorage: storageAccount,
+        delegateStorage: delegateStorageAccount2,
+        subscription: subscriptionAccount2,
         systemProgram: anchor.web3.SystemProgram.programId,
       }).signers([channel1]).rpc();
 
@@ -255,12 +295,18 @@ describe("push_comm_subscription_tests", () => {
       await program.methods.removeDelegate(delegate1.publicKey).accounts({
         storage: delegateStroage,
         signer: channel1.publicKey,
+        commStorage: storageAccount,
+        delegateStorage: delegateStorageAccount1,
+        subscription: subscriptionAccount1,
         systemProgram: anchor.web3.SystemProgram.programId,
       }).signers([channel1]).rpc();
 
       await program.methods.removeDelegate(delegate2.publicKey).accounts({
         storage: delegateStroage2nd,
         signer: channel1.publicKey,
+        commStorage: storageAccount,
+        delegateStorage: delegateStorageAccount2,
+        subscription: subscriptionAccount2,
         systemProgram: anchor.web3.SystemProgram.programId,
       }).signers([channel1]).rpc();
 
@@ -278,14 +324,19 @@ describe("push_comm_subscription_tests", () => {
 
     it("Channel1 adds - removes - adds back delegate1", async () => {
       const [delegateStroage] = await anchor.web3.PublicKey.findProgramAddressSync([SEEDS.DELEGATE, channel1.publicKey.toBuffer(), delegate1.publicKey.toBuffer()], program.programId);
+      const [storageAccount] = await anchor.web3.PublicKey.findProgramAddressSync([SEEDS.PUSH_COMM_STORAGE], program.programId);
+      const [delegateStorageAccount] = await anchor.web3.PublicKey.findProgramAddressSync([SEEDS.USER_STORAGE, delegate1.publicKey.toBuffer()], program.programId);
+      const [subscriptionAccount] = await anchor.web3.PublicKey.findProgramAddressSync([SEEDS.SUBSCRIPTION, delegate1.publicKey.toBuffer(), channel1.publicKey.toBuffer()], program.programId);
 
       // Initialize delegate_storage by adding delegate1
       await program.methods.addDelegate(delegate1.publicKey).accounts({
         storage: delegateStroage,
         signer: channel1.publicKey,
+        commStorage: storageAccount,
+        delegateStorage: delegateStorageAccount,
+        subscription: subscriptionAccount,
         systemProgram: anchor.web3.SystemProgram.programId,
       }).signers([channel1]).rpc();
-    
 
       // Fetch the delegate_storage account to verify the delegate addition
       const delegateStorageData = await program.account.delegatedNotificationSenders.fetch(delegateStroage);
@@ -296,6 +347,9 @@ describe("push_comm_subscription_tests", () => {
       await program.methods.removeDelegate(delegate1.publicKey).accounts({
         storage: delegateStroage,
         signer: channel1.publicKey,
+        commStorage: storageAccount,
+        delegateStorage: delegateStorageAccount,
+        subscription: subscriptionAccount,
         systemProgram: anchor.web3.SystemProgram.programId,
       }).signers([channel1]).rpc();
 
@@ -309,6 +363,9 @@ describe("push_comm_subscription_tests", () => {
       await program.methods.addDelegate(delegate1.publicKey).accounts({
         storage: delegateStroage,
         signer: channel1.publicKey,
+        commStorage: storageAccount,
+        delegateStorage: delegateStorageAccount,
+        subscription: subscriptionAccount,
         systemProgram: anchor.web3.SystemProgram.programId,
       }).signers([channel1]).rpc();
 
@@ -321,11 +378,17 @@ describe("push_comm_subscription_tests", () => {
 
     it("Channel1 tries adding delegate1 twice", async () => {
       const [delegateStroage] = await anchor.web3.PublicKey.findProgramAddressSync([SEEDS.DELEGATE, channel1.publicKey.toBuffer(), delegate1.publicKey.toBuffer()], program.programId);
+      const [storageAccount] = await anchor.web3.PublicKey.findProgramAddressSync([SEEDS.PUSH_COMM_STORAGE], program.programId);
+      const [delegateStorageAccount] = await anchor.web3.PublicKey.findProgramAddressSync([SEEDS.USER_STORAGE, delegate1.publicKey.toBuffer()], program.programId);
+      const [subscriptionAccount] = await anchor.web3.PublicKey.findProgramAddressSync([SEEDS.SUBSCRIPTION, delegate1.publicKey.toBuffer(), channel1.publicKey.toBuffer()], program.programId);
 
       // Initialize delegate_storage by adding delegate1
       await program.methods.addDelegate(delegate1.publicKey).accounts({
         storage: delegateStroage,
         signer: channel1.publicKey,
+        commStorage: storageAccount,
+        delegateStorage: delegateStorageAccount,
+        subscription: subscriptionAccount,
         systemProgram: anchor.web3.SystemProgram.programId,
       }).signers([channel1]).rpc();
     
@@ -339,6 +402,9 @@ describe("push_comm_subscription_tests", () => {
         await program.methods.addDelegate(delegate1.publicKey).accounts({
           storage: delegateStroage,
           signer: channel1.publicKey,
+          commStorage: storageAccount,
+          delegateStorage: delegateStorageAccount,
+          subscription: subscriptionAccount,
           systemProgram: anchor.web3.SystemProgram.programId,
         }).signers([channel1]).rpc();
 
@@ -359,11 +425,17 @@ describe("push_comm_subscription_tests", () => {
         [SEEDS.DELEGATE, channel1.publicKey.toBuffer(), channel1.publicKey.toBuffer()],
         program.programId
       );
-    
+      const [storageAccount] = await anchor.web3.PublicKey.findProgramAddressSync([SEEDS.PUSH_COMM_STORAGE], program.programId);
+      const [delegateStorageAccount] = await anchor.web3.PublicKey.findProgramAddressSync([SEEDS.USER_STORAGE, channel1.publicKey.toBuffer()], program.programId);
+      const [subscriptionAccount] = await anchor.web3.PublicKey.findProgramAddressSync([SEEDS.SUBSCRIPTION, channel1.publicKey.toBuffer(), channel1.publicKey.toBuffer()], program.programId);
+
       // First attempt to add channel1 as its own delegate
       await program.methods.addDelegate(channel1.publicKey).accounts({
         storage: delegateStorage,
         signer: channel1.publicKey,
+        commStorage: storageAccount,
+        delegateStorage: delegateStorageAccount,
+        subscription: subscriptionAccount,
         systemProgram: anchor.web3.SystemProgram.programId,
       }).signers([channel1]).rpc();
     
@@ -372,6 +444,9 @@ describe("push_comm_subscription_tests", () => {
         await program.methods.addDelegate(channel1.publicKey).accounts({
           storage: delegateStorage,
           signer: channel1.publicKey,
+          commStorage: storageAccount,
+          delegateStorage: delegateStorageAccount,
+          subscription: subscriptionAccount,
           systemProgram: anchor.web3.SystemProgram.programId,
         }).signers([channel1]).rpc();
     
@@ -388,11 +463,17 @@ describe("push_comm_subscription_tests", () => {
 
     it("Channel1 tries removing delegate1 twice", async () => {
       const [delegateStroage] = await anchor.web3.PublicKey.findProgramAddressSync([SEEDS.DELEGATE, channel1.publicKey.toBuffer(), delegate1.publicKey.toBuffer()], program.programId);
+      const [storageAccount] = await anchor.web3.PublicKey.findProgramAddressSync([SEEDS.PUSH_COMM_STORAGE], program.programId);
+      const [delegateStorageAccount] = await anchor.web3.PublicKey.findProgramAddressSync([SEEDS.USER_STORAGE, delegate1.publicKey.toBuffer()], program.programId);
+      const [subscriptionAccount] = await anchor.web3.PublicKey.findProgramAddressSync([SEEDS.SUBSCRIPTION, delegate1.publicKey.toBuffer(), channel1.publicKey.toBuffer()], program.programId);
 
       // Initialize delegate_storage by adding delegate1
       await program.methods.addDelegate(delegate1.publicKey).accounts({
         storage: delegateStroage,
         signer: channel1.publicKey,
+        commStorage: storageAccount,
+        delegateStorage: delegateStorageAccount,
+        subscription: subscriptionAccount,
         systemProgram: anchor.web3.SystemProgram.programId,
       }).signers([channel1]).rpc();
 
@@ -400,6 +481,9 @@ describe("push_comm_subscription_tests", () => {
       await program.methods.removeDelegate(delegate1.publicKey).accounts({
         storage: delegateStroage,
         signer: channel1.publicKey,
+        commStorage: storageAccount,
+        delegateStorage: delegateStorageAccount,
+        subscription: subscriptionAccount,
         systemProgram: anchor.web3.SystemProgram.programId,
       }).signers([channel1]).rpc();
     
@@ -407,6 +491,9 @@ describe("push_comm_subscription_tests", () => {
         await program.methods.removeDelegate(delegate1.publicKey).accounts({
           storage: delegateStroage,
           signer: channel1.publicKey,
+          commStorage: storageAccount,
+          delegateStorage: delegateStorageAccount,
+          subscription: subscriptionAccount,
           systemProgram: anchor.web3.SystemProgram.programId,
         }).signers([channel1]).rpc();
 
@@ -424,6 +511,9 @@ describe("push_comm_subscription_tests", () => {
 
     it("Adding a delegate should EMIT accurate event", async () => {
       const [delegateStroage] = await anchor.web3.PublicKey.findProgramAddressSync([SEEDS.DELEGATE, channel1.publicKey.toBuffer(), delegate1.publicKey.toBuffer()], program.programId);
+      const [storageAccount] = await anchor.web3.PublicKey.findProgramAddressSync([SEEDS.PUSH_COMM_STORAGE], program.programId);
+      const [delegateStorageAccount] = await anchor.web3.PublicKey.findProgramAddressSync([SEEDS.USER_STORAGE, delegate1.publicKey.toBuffer()], program.programId);
+      const [subscriptionAccount] = await anchor.web3.PublicKey.findProgramAddressSync([SEEDS.SUBSCRIPTION, delegate1.publicKey.toBuffer(), channel1.publicKey.toBuffer()], program.programId);
       
        let addDelegateEvent: any = null;
 
@@ -434,6 +524,9 @@ describe("push_comm_subscription_tests", () => {
         await program.methods.addDelegate(delegate1.publicKey).accounts({
           storage: delegateStroage,
           signer: channel1.publicKey,
+          commStorage: storageAccount,
+          delegateStorage: delegateStorageAccount,
+          subscription: subscriptionAccount,
           systemProgram: anchor.web3.SystemProgram.programId,
         }).signers([channel1]).rpc();
 
@@ -448,11 +541,17 @@ describe("push_comm_subscription_tests", () => {
 
     it("Removing a delegate should EMIT accurate event", async () => {
       const [delegateStroage] = await anchor.web3.PublicKey.findProgramAddressSync([SEEDS.DELEGATE, channel1.publicKey.toBuffer(), delegate1.publicKey.toBuffer()], program.programId);
+      const [storageAccount] = await anchor.web3.PublicKey.findProgramAddressSync([SEEDS.PUSH_COMM_STORAGE], program.programId);
+      const [delegateStorageAccount] = await anchor.web3.PublicKey.findProgramAddressSync([SEEDS.USER_STORAGE, delegate1.publicKey.toBuffer()], program.programId);
+      const [subscriptionAccount] = await anchor.web3.PublicKey.findProgramAddressSync([SEEDS.SUBSCRIPTION, delegate1.publicKey.toBuffer(), channel1.publicKey.toBuffer()], program.programId);
 
         // Initialize delegate_storage by adding delegate1
         await program.methods.addDelegate(delegate1.publicKey).accounts({
           storage: delegateStroage,
           signer: channel1.publicKey,
+          commStorage: storageAccount,
+          delegateStorage: delegateStorageAccount,
+          subscription: subscriptionAccount,
           systemProgram: anchor.web3.SystemProgram.programId,
         }).signers([channel1]).rpc();
        let removeDelegateEvent: any = null;
@@ -464,6 +563,9 @@ describe("push_comm_subscription_tests", () => {
         await program.methods.removeDelegate(delegate1.publicKey).accounts({
           storage: delegateStroage,
           signer: channel1.publicKey,
+          commStorage: storageAccount,
+          delegateStorage: delegateStorageAccount,
+          subscription: subscriptionAccount,
           systemProgram: anchor.web3.SystemProgram.programId,}).signers([channel1]).rpc();
 
          await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -490,12 +592,18 @@ describe("push_comm_subscription_tests", () => {
 
       it("Notification to USER1 by delegate1 for Channel 1", async () => {
         const [delegateStroage, bump] = await anchor.web3.PublicKey.findProgramAddressSync([SEEDS.DELEGATE, channel1.publicKey.toBuffer(), delegate1.publicKey.toBuffer()], program.programId);
-        
+        const [storageAccount] = await anchor.web3.PublicKey.findProgramAddressSync([SEEDS.PUSH_COMM_STORAGE], program.programId);
+        const [delegateStorageAccount] = await anchor.web3.PublicKey.findProgramAddressSync([SEEDS.USER_STORAGE, delegate1.publicKey.toBuffer()], program.programId);
+        const [subscriptionAccount] = await anchor.web3.PublicKey.findProgramAddressSync([SEEDS.SUBSCRIPTION, delegate1.publicKey.toBuffer(), channel1.publicKey.toBuffer()], program.programId);
+
                 // Initialize delegate_storage by adding delegate
         await program.methods.addDelegate(delegate1.publicKey)
         .accounts({
           storage: delegateStroage,
           signer: channel1.publicKey,
+          commStorage: storageAccount,
+          delegateStorage: delegateStorageAccount,
+          subscription: subscriptionAccount,
           systemProgram: anchor.web3.SystemProgram.programId,
         })
         .signers([channel1])
@@ -532,12 +640,18 @@ describe("push_comm_subscription_tests", () => {
 
       it("Notification to USER1 by Channel1 for Channel 1", async () => {
         const [delegateStroage, bump] = await anchor.web3.PublicKey.findProgramAddressSync([SEEDS.DELEGATE, channel1.publicKey.toBuffer(), channel1.publicKey.toBuffer()], program.programId);
+        const [storageAccount] = await anchor.web3.PublicKey.findProgramAddressSync([SEEDS.PUSH_COMM_STORAGE], program.programId);
+        const [delegateStorageAccount] = await anchor.web3.PublicKey.findProgramAddressSync([SEEDS.USER_STORAGE, channel1.publicKey.toBuffer()], program.programId);
+        const [subscriptionAccount] = await anchor.web3.PublicKey.findProgramAddressSync([SEEDS.SUBSCRIPTION, channel1.publicKey.toBuffer(), channel1.publicKey.toBuffer()], program.programId);
         
                 // Initialize delegate_storage by adding delegate
         await program.methods.addDelegate(channel1.publicKey)
         .accounts({
           storage: delegateStroage,
           signer: channel1.publicKey,
+          commStorage: storageAccount,
+          delegateStorage: delegateStorageAccount,
+          subscription: subscriptionAccount,
           systemProgram: anchor.web3.SystemProgram.programId,
         })
         .signers([channel1])
@@ -577,11 +691,17 @@ describe("push_comm_subscription_tests", () => {
           [SEEDS.DELEGATE, channel1.publicKey.toBuffer(), delegate1.publicKey.toBuffer()],
           program.programId
         );
+        const [storageAccount] = await anchor.web3.PublicKey.findProgramAddressSync([SEEDS.PUSH_COMM_STORAGE], program.programId);
+        const [delegateStorageAccount] = await anchor.web3.PublicKey.findProgramAddressSync([SEEDS.USER_STORAGE, delegate1.publicKey.toBuffer()], program.programId);
+        const [subscriptionAccount] = await anchor.web3.PublicKey.findProgramAddressSync([SEEDS.SUBSCRIPTION, delegate1.publicKey.toBuffer(), channel1.publicKey.toBuffer()], program.programId);
       
         // Authorize delegate1 for channel1
         await program.methods.addDelegate(delegate1.publicKey).accounts({
           storage: delegateStorage,
           signer: channel1.publicKey,
+          commStorage: storageAccount,
+          delegateStorage: delegateStorageAccount,
+          subscription: subscriptionAccount,
           systemProgram: anchor.web3.SystemProgram.programId,
         }).signers([channel1]).rpc();
       
@@ -644,11 +764,17 @@ describe("push_comm_subscription_tests", () => {
           [SEEDS.DELEGATE, channel1.publicKey.toBuffer(), delegate1.publicKey.toBuffer()],
           program.programId
         );
+        const [storageAccount] = await anchor.web3.PublicKey.findProgramAddressSync([SEEDS.PUSH_COMM_STORAGE], program.programId);
+        const [delegateStorageAccount] = await anchor.web3.PublicKey.findProgramAddressSync([SEEDS.USER_STORAGE, delegate1.publicKey.toBuffer()], program.programId);
+        const [subscriptionAccount] = await anchor.web3.PublicKey.findProgramAddressSync([SEEDS.SUBSCRIPTION, delegate1.publicKey.toBuffer(), channel1.publicKey.toBuffer()], program.programId);
       
         // Initialize delegate_storage by adding delegate1
         await program.methods.addDelegate(delegate1.publicKey).accounts({
           storage: delegateStorage,
           signer: channel1.publicKey,
+          commStorage: storageAccount,
+          delegateStorage: delegateStorageAccount,
+          subscription: subscriptionAccount,
           systemProgram: anchor.web3.SystemProgram.programId,
         }).signers([channel1]).rpc();
       
@@ -656,6 +782,9 @@ describe("push_comm_subscription_tests", () => {
         await program.methods.removeDelegate(delegate1.publicKey).accounts({
           storage: delegateStorage,
           signer: channel1.publicKey,
+          commStorage: storageAccount,
+          delegateStorage: delegateStorageAccount,
+          subscription: subscriptionAccount,
           systemProgram: anchor.web3.SystemProgram.programId,
         }).signers([channel1]).rpc();
       
@@ -691,22 +820,33 @@ describe("push_comm_subscription_tests", () => {
           [SEEDS.DELEGATE, channel1.publicKey.toBuffer(), delegate1.publicKey.toBuffer()],
           program.programId
         );
+        const [storageAccount] = await anchor.web3.PublicKey.findProgramAddressSync([SEEDS.PUSH_COMM_STORAGE], program.programId);
+        const [delegateStorageAccount1] = await anchor.web3.PublicKey.findProgramAddressSync([SEEDS.USER_STORAGE, delegate1.publicKey.toBuffer()], program.programId);
+        const [subscriptionAccount1] = await anchor.web3.PublicKey.findProgramAddressSync([SEEDS.SUBSCRIPTION, delegate1.publicKey.toBuffer(), channel1.publicKey.toBuffer()], program.programId);
       
         const [delegateStorage2] = await anchor.web3.PublicKey.findProgramAddressSync(
           [SEEDS.DELEGATE, channel1.publicKey.toBuffer(), delegate2.publicKey.toBuffer()],
           program.programId
         );
+        const [delegateStorageAccount2] = await anchor.web3.PublicKey.findProgramAddressSync([SEEDS.USER_STORAGE, delegate2.publicKey.toBuffer()], program.programId);
+        const [subscriptionAccount2] = await anchor.web3.PublicKey.findProgramAddressSync([SEEDS.SUBSCRIPTION, delegate2.publicKey.toBuffer(), channel1.publicKey.toBuffer()], program.programId);
       
         // Step 1: Add delegate1 and delegate2 for channel1
         await program.methods.addDelegate(delegate1.publicKey).accounts({
           storage: delegateStorage1,
           signer: channel1.publicKey,
+          commStorage: storageAccount,
+          delegateStorage: delegateStorageAccount1,
+          subscription: subscriptionAccount1,
           systemProgram: anchor.web3.SystemProgram.programId,
         }).signers([channel1]).rpc();
       
         await program.methods.addDelegate(delegate2.publicKey).accounts({
           storage: delegateStorage2,
           signer: channel1.publicKey,
+          commStorage: storageAccount,
+          delegateStorage: delegateStorageAccount2,
+          subscription: subscriptionAccount2,
           systemProgram: anchor.web3.SystemProgram.programId,
         }).signers([channel1]).rpc();
       
