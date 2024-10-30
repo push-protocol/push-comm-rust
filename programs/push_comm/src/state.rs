@@ -9,7 +9,6 @@ pub struct PushCommStorageV3 {
     pub push_channel_admin: Pubkey,
     pub chain_id: u64,
     pub user_count: u64,
-    pub push_core_address: Pubkey,
     pub push_token_ntt: Pubkey,
     pub paused: bool,
 }

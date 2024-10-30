@@ -30,15 +30,7 @@ pub mod push_comm {
 
 /**
  * ADMIN FUNCTIONS
- */
-    pub fn set_core_address(ctx: Context<AdminStorageUpdateCTX>, //@audit - TBD IF NEEDED 
-        push_core_address: Pubkey,
-        ) -> Result <()> {
-            let storage = &mut ctx.accounts.storage;
-            storage.push_core_address = push_core_address;
-            Ok(())
-        }
-    
+ */ 
     pub fn set_governance_address(ctx: Context<AdminStorageUpdateCTX>,
         governance: Pubkey,
     ) -> Result<()> {
