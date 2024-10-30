@@ -114,10 +114,10 @@ describe("push_comm_subscription_tests", () => {
   it("Is initialized!", async () => {
 
     const [storage, bump] = await anchor.web3.PublicKey.findProgramAddressSync([SEEDS.PUSH_COMM_STORAGE], program.programId);
-    const chainId = new anchor.BN(1);
+    const chainCluster = "devnet";
     const tx = await program.methods.initialize(
       pushAdmin.publicKey,
-      chainId,
+      chainCluster,
     ).accounts({
       storage: storage,
       signer: pushAdmin.publicKey,
@@ -127,7 +127,7 @@ describe("push_comm_subscription_tests", () => {
     // Fetch the initialized account and check initial values
     const accountData = await program.account.pushCommStorageV3.fetch(storage);
 
-    expect(accountData.chainId.toString()).to.equal(chainId.toString());
+    expect(accountData.chainCluster.toString()).to.equal(chainCluster.toString());
     expect(accountData.governance.toString()).to.eq(pushAdmin.publicKey.toString());
     expect(accountData.pushChannelAdmin.toString()).to.eq(pushAdmin.publicKey.toString());
 
