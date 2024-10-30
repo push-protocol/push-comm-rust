@@ -226,36 +226,39 @@ fn _add_user(user_storage: &mut Account<UserStorage>, comm_storage: &mut Account
 }
 
 fn _subscribe(user_storage: &mut Account<UserStorage>, subscription_storage: &mut Account<Subscription>, user: Pubkey, channel: Pubkey) -> Result<()> {
-    require!(subscription_storage.is_subscribed == false, PushCommError::AlreadySubscribed);
+    if !subscription_storage.is_subscribed {
 
-    // Increase user subscribe count by check overflow
-    user_storage.user_subscribe_count += 1;
-    // Mark user as subscribed for a given channel
-    subscription_storage.is_subscribed = true;
+        // Increase user subscribe count by check overflow
+        user_storage.user_subscribe_count += 1;
+        // Mark user as subscribed for a given channel
+        subscription_storage.is_subscribed = true;
 
-    emit!(Subscribed {
-        user: user,
-        channel: channel,
-    });
+        emit!(Subscribed {
+            user: user,
+            channel: channel,
+        });
+    }
 
     Ok(())
 }
 
 fn _unsubscribe(user_storage: &mut Account<UserStorage>, subscription_storage: &mut Account<Subscription>, user: Pubkey, channel: Pubkey) -> Result<()> {
-    require!(subscription_storage.is_subscribed == true, PushCommError::NotSubscribed);
+    if subscription_storage.is_subscribed {
 
-    // Decrease user subscribe count
-    user_storage.user_subscribe_count = user_storage
-    .user_subscribe_count
-    .checked_sub(1)
-    .ok_or(PushCommError::Underflow)?;
-    // Mark user as unsubscribed for a given channel
-    subscription_storage.is_subscribed = false;
+        // Decrease user subscribe count
+        user_storage.user_subscribe_count = user_storage
+        .user_subscribe_count
+        .checked_sub(1)
+        .ok_or(PushCommError::Underflow)?;
+        // Mark user as unsubscribed for a given channel
+        subscription_storage.is_subscribed = false;
 
-    emit!(Unsubscribed {
-        user: user,
-        channel: channel,
-    });
+        emit!(Unsubscribed {
+            user: user,
+            channel: channel,
+        });
+
+    }
 
     Ok(())
 }
