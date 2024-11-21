@@ -70,6 +70,9 @@ pub mod push_comm {
         let storage = &mut ctx.accounts.storage;
         require!(!storage.paused, PushCommError::ContractPaused);
 
+        // Revert if new_owner is the default (zero) address
+        require!(new_owner != Pubkey::default(), PushCommError::InvalidArgument);
+
         storage.push_channel_admin = new_owner;
         Ok(())
     }

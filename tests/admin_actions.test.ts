@@ -289,6 +289,34 @@ describe("push_comm_admin_setter_functions", () => {
 
   });
 
+  it("fails to transfer admin ownership to zero address", async () => {
+    const [storage, bump] = anchor.web3.PublicKey.findProgramAddressSync(
+      [SEEDS.PUSH_COMM_STORAGE],
+      program.programId
+    );
+  
+    try {
+      // Attempt to transfer ownership to the zero address
+      const tx = await program.methods
+        .transferAdminOwnership(anchor.web3.PublicKey.default) // Zero address
+        .accounts({
+          storage: storage,
+          pushChannelAdmin: pushAdmin.publicKey,
+        })
+        .signers([pushAdmin])
+        .rpc();
+  
+      console.log("Transaction signature:", tx);
+      // If the transaction does not throw, fail the test
+      throw new Error("Transaction did not fail as expected");
+    } catch (err) {
+      // Assert that the error is the expected one
+      expect(err.error.errorCode.code).to.equal("InvalidArgument");
+      expect(err.error.errorCode.number).to.equal(6001); // Replace with your actual error code number
+    }
+  });
+  
+
   it("transfer admin ownership by non-admin should fail ", async () => {
     const [storage, bump] = await anchor.web3.PublicKey.findProgramAddressSync([SEEDS.PUSH_COMM_STORAGE], program.programId);
 
