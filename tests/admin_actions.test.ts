@@ -148,6 +148,47 @@ describe("push_comm_admin_setter_functions", () => {
     }
   });
 
+  it("set chain cluster by admin ", async () => {
+    const [storage, bump] = await anchor.web3.PublicKey.findProgramAddressSync([SEEDS.PUSH_COMM_STORAGE], program.programId);
+    const chainCluster = "devnet";
+
+    const tx = await program.methods.setChainCluster(
+      chainCluster
+    ).accounts({
+      storage: storage,
+      pushChannelAdmin: pushAdmin.publicKey,
+    }).signers([pushAdmin]).rpc();
+    
+    console.log("Your transaction signature", tx);
+
+    const accountData = await program.account.pushCommStorage.fetch(storage);
+    
+    expect(accountData.chainCluster.toString()).to.eq(chainCluster.toString());
+  });
+
+  it("set chain cluster by non-admin should fail ", async () => {
+    const [storage, bump] = await anchor.web3.PublicKey.findProgramAddressSync([SEEDS.PUSH_COMM_STORAGE], program.programId);
+    const chainCluster = "devnet";
+
+    try {
+      await program.methods.setChainCluster(
+        chainCluster
+      ).accounts({
+        storage: storage,
+        pushChannelAdmin: user1.publicKey,
+      }).signers([user1]).rpc();
+      assert.fail("The transaction should have failed but it succeeded.");
+
+    } catch (_err) {
+      assert.isTrue(_err instanceof anchor.AnchorError, "Error is not an AnchorError");
+      const err: anchor.AnchorError = _err;
+      const expectedErrorMsg = ERRORS.Unauthorized;
+      assert.strictEqual(err.error.errorMessage, expectedErrorMsg, `Expected error message to be "${expectedErrorMsg}" but got "${err.error.errorMessage}"`);
+      
+      console.log("Error number:", err.error.errorCode.number);
+    }
+  });
+
   it("set governance address by admin ", async () => {
     const [storage, bump] = await anchor.web3.PublicKey.findProgramAddressSync([SEEDS.PUSH_COMM_STORAGE], program.programId);
     const governance = anchor.web3.Keypair.generate().publicKey;

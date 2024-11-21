@@ -47,6 +47,14 @@ pub mod push_comm {
         Ok(())
     }
 
+    pub fn set_chain_cluster(ctx: Context<AdminStorageUpdateCTX>,
+        chain_cluster: String,
+    ) -> Result<()> {
+        let storage = &mut ctx.accounts.storage;
+        storage.chain_cluster = chain_cluster;
+        Ok(())
+    }
+
     pub fn pause_contract(ctx: Context<AdminStorageUpdateCTX>,
     ) -> Result<()>{
         let storage = &mut ctx.accounts.storage;
