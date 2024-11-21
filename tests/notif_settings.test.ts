@@ -253,6 +253,70 @@ describe("push_comm_subscription_tests", () => {
 
         });
 
+        it("Should update notif_settings if invoked again", async () => {
+          const [storage] = await anchor.web3.PublicKey.findProgramAddressSync(
+            [SEEDS.USER_NOTIF_SETTINGS, user1.publicKey.toBuffer(), channel1.publicKey.toBuffer()],
+            program.programId
+          );
+          const [subscription] = await anchor.web3.PublicKey.findProgramAddressSync(
+              [SEEDS.SUBSCRIPTION, user1.publicKey.toBuffer(), channel1.publicKey.toBuffer()],
+              program.programId
+              );
+
+              const [storageComm, bump2nd] = await anchor.web3.PublicKey.findProgramAddressSync([SEEDS.PUSH_COMM_STORAGE], program.programId);
+              const [userStorageAccount, bump1st] = await anchor.web3.PublicKey.findProgramAddressSync([SEEDS.USER_STORAGE, user1.publicKey.toBuffer()], program.programId);
+          
+          
+          // Subscribe user1
+          const tx = await program.methods.subscribe(channel1.publicKey).accounts({
+            storage: userStorageAccount,
+            subscription: subscription,
+            channel: channel1.publicKey,
+            commStorage: storageComm,
+            signer: user1.publicKey,
+            systemProgram: anchor.web3.SystemProgram.programId,
+        }).signers([user1]).rpc();
+
+          // Notif Settings 1
+          const notifId1 = new anchor.BN(1);
+          const notifSettings1 = "3+1-0+2-0+3-1+4-98";
+        
+          // Attempt to send a notification using delegate2 instead of delegate1
+          await program.methods.setUserNotificationSettings(
+              channel1.publicKey,
+              notifId1,
+              notifSettings1
+          ).accounts({
+              storage: storage,
+              subscription: subscription,
+              signer: user1.publicKey,
+              systemProgram: anchor.web3.SystemProgram.programId,
+          }).signers([user1]).rpc();
+
+          const settingData1 = await program.account.userNotificationSettings.fetch(storage);
+          expect(settingData1.notifSettings).to.eq(`${notifId1}+${notifSettings1}`);
+
+
+          // Notif Settings 1
+          const notifId2 = new anchor.BN(2);
+          const notifSettings2 = "3+1-0+2-0+3-1+4-97";
+        
+          // Attempt to send a notification using delegate2 instead of delegate1
+          await program.methods.setUserNotificationSettings(
+              channel1.publicKey,
+              notifId2,
+              notifSettings2
+          ).accounts({
+              storage: storage,
+              subscription: subscription,
+              signer: user1.publicKey,
+              systemProgram: anchor.web3.SystemProgram.programId,
+          }).signers([user1]).rpc();
+
+          const settingData2 = await program.account.userNotificationSettings.fetch(storage);
+          expect(settingData2.notifSettings).to.eq(`${notifId2}+${notifSettings2}`);
+        });
+
         it("Should fail if notif_settings string exceeds MAX_NOTIF_SETTINGS_LENGTH", async () => {
           // Derive necessary accounts
           const [storage] = await anchor.web3.PublicKey.findProgramAddressSync(
