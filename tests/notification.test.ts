@@ -530,6 +530,44 @@ describe("push_comm_subscription_tests", () => {
 
       });
 
+      it("Notification to USER1 if Channel1 adds itself as a delegate", async () => {
+        const [delegateStroage, bump] = await anchor.web3.PublicKey.findProgramAddressSync([SEEDS.DELEGATE, channel1.publicKey.toBuffer(), channel1.publicKey.toBuffer()], program.programId);
+
+        // Initialize delegate_storage by adding delegate1
+        await program.methods.addDelegate(channel1.publicKey).accounts({
+          storage: delegateStroage,
+          signer: channel1.publicKey,
+          systemProgram: anchor.web3.SystemProgram.programId,
+        }).signers([channel1]).rpc();
+
+        // Prepare notification data
+        const notificationIdentity = Buffer.from("Test notification from delegate");
+        
+        let notificationEvent: any = null;
+
+        const listner = program.addEventListener('SendNotification', (event, slot) => {
+          notificationEvent = event;  
+        })
+        // Channel1 Sends notification to USER1
+        program.methods.sendNotification(channel1.publicKey, user1.publicKey, notificationIdentity)
+          .accounts({
+            delegateStorage: delegateStroage,
+            signer: channel1.publicKey,
+            systemProgram: anchor.web3.SystemProgram.programId,
+          })
+
+          .signers([channel1])
+          .rpc();
+
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+          await program.removeEventListener(listner);
+
+          //expect(notificationEvent).to.not.be.null;
+          expect(notificationEvent.recipient.toString()).to.eq(user1.publicKey.toString());
+          expect(notificationEvent.channel.toString()).to.eq(channel1.publicKey.toString());
+          expect(notificationEvent.message.toString()).to.eq(notificationIdentity.toString());
+      })
+
       it("Notification to USER1 by Channel1 for Channel 1", async () => {
         const [delegateStroage, bump] = await anchor.web3.PublicKey.findProgramAddressSync([SEEDS.DELEGATE, channel1.publicKey.toBuffer(), channel1.publicKey.toBuffer()], program.programId);
 

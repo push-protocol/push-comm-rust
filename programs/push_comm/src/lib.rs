@@ -181,7 +181,7 @@ pub mod push_comm {
     
         // Check if the caller is a valid delegate or the channel itself
         let is_valid = (delegate_storage.delegate == caller.key() && delegate_storage.is_delegate)
-            || (caller.key() == channel && !delegate_storage.is_delegate);
+            || (caller.key() == channel);
     
         if is_valid {
             emit!(SendNotification {
