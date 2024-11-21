@@ -11,7 +11,7 @@ use crate::state::*;
 use crate::errors::*;
 use crate::events::*;
 
-declare_id!("7uczcz9GTYCneGpfNMBT1ccuFBGcLcF1seVGw9utaaw1");
+declare_id!("8WQie28DNTw7WYKEzaJeiMxa6BMYXcxQfAeW1ZZwoX6K");
 
 #[program]
 pub mod push_comm {
@@ -139,17 +139,6 @@ pub mod push_comm {
     pub fn add_delegate(ctx: Context<DelegateNotifSenders>, delegate: Pubkey) -> Result<()> {
         let storage = &mut ctx.accounts.storage;
         require!( !storage.is_delegate, PushCommError::DelegateAlreadyAdded);
-    
-        // Call _add_user to activate the user in comm_storage if necessary
-        _add_user(&mut ctx.accounts.delegate_storage, &mut ctx.accounts.comm_storage)?;
-    
-        // Call _subscribe to subscribe the delegate to the channel
-        _subscribe(
-            &mut ctx.accounts.delegate_storage,
-            &mut ctx.accounts.subscription,
-            delegate,
-            ctx.accounts.signer.key()
-        )?;
 
         storage.channel = ctx.accounts.signer.key();
         storage.delegate = delegate;
@@ -353,27 +342,6 @@ pub struct DelegateNotifSenders <'info>{
         seeds = [DELEGATE, signer.key().as_ref(), delegate.key().as_ref()],
         bump )]
     pub storage: Account<'info, DelegatedNotificationSenders>,
-
-    #[account(
-        init_if_needed,
-        payer = signer,
-        space = 8 + 1 + 8 + 8, // discriminator + bool + u64 + u64
-        seeds = [USER_STORAGE, delegate.key().as_ref()],
-        bump
-    )]
-    pub delegate_storage: Account<'info, UserStorage>,
-
-    #[account(
-        init_if_needed,
-        payer = signer,
-        space = 8 + 1, // discriminator + bool
-        seeds = [SUBSCRIPTION, delegate.key().as_ref(), signer.key().as_ref()],
-        bump
-    )]
-    pub subscription: Account<'info, Subscription>,
-    
-    #[account(mut, seeds = [PUSH_COMM_STORAGE], bump)]
-    pub comm_storage: Account<'info, PushCommStorageV3>,
 
     #[account(mut)]
     pub signer: Signer<'info>,
