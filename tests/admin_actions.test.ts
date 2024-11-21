@@ -34,7 +34,7 @@ describe("push_comm_admin_setter_functions", () => {
   afterEach(async () => {
     const [storage, bump] = await anchor.web3.PublicKey.findProgramAddressSync([SEEDS.PUSH_COMM_STORAGE], program.programId);
     // Fetch the storage account to verify admin settings after each test
-    const storageAccount = await program.account.pushCommStorageV3.fetch(storage);
+    const storageAccount = await program.account.pushCommStorage.fetch(storage);
 
     const currentAdmin = storageAccount.pushChannelAdmin;
     // Check if current admin is pushAdmin
@@ -54,7 +54,7 @@ describe("push_comm_admin_setter_functions", () => {
       console.log(`Transferred admin ownership back to pushAdmin from ${currentAdmin.toString()}`);
 
       // Fetch the storage account again to confirm
-      const updatedStorageAccount = await program.account.pushCommStorageV3.fetch(storage);
+      const updatedStorageAccount = await program.account.pushCommStorage.fetch(storage);
       assert.strictEqual(
         updatedStorageAccount.pushChannelAdmin.toString(),
         pushAdmin.publicKey.toString(),
@@ -77,7 +77,7 @@ describe("push_comm_admin_setter_functions", () => {
       console.log("Unpaused the contract");
 
       // Fetch the storage account again to confirm
-      const updatedStorageAccount = await program.account.pushCommStorageV3.fetch(storage);
+      const updatedStorageAccount = await program.account.pushCommStorage.fetch(storage);
       assert.strictEqual(updatedStorageAccount.paused, false, "Failed to unpause the contract");
     }
   });
@@ -98,7 +98,7 @@ describe("push_comm_admin_setter_functions", () => {
     console.log("Your transaction signature", tx);
 
     // Fetch the initialized account and check initial values
-    const accountData = await program.account.pushCommStorageV3.fetch(storage);
+    const accountData = await program.account.pushCommStorage.fetch(storage);
 
     expect(accountData.chainCluster.toString()).to.equal(chainCluster.toString());
     expect(accountData.governance.toString()).to.eq(pushAdmin.publicKey.toString());
@@ -120,7 +120,7 @@ describe("push_comm_admin_setter_functions", () => {
     
     console.log("Your transaction signature", tx);
 
-    const accountData = await program.account.pushCommStorageV3.fetch(storage);
+    const accountData = await program.account.pushCommStorage.fetch(storage);
     
     expect(accountData.pushTokenNtt.toString()).to.eq(pushToken.toString());
   });
@@ -161,7 +161,7 @@ describe("push_comm_admin_setter_functions", () => {
     
     console.log("Your transaction signature", tx);
 
-    const accountData = await program.account.pushCommStorageV3.fetch(storage);
+    const accountData = await program.account.pushCommStorage.fetch(storage);
     
     expect(accountData.governance.toString()).to.eq(governance.toString());
 
@@ -200,7 +200,7 @@ describe("push_comm_admin_setter_functions", () => {
     
     console.log("Your transaction signature", tx);
 
-    const accountData = await program.account.pushCommStorageV3.fetch(storage);
+    const accountData = await program.account.pushCommStorage.fetch(storage);
     
     expect(accountData.paused).to.eq(true);
 
@@ -246,7 +246,7 @@ describe("push_comm_admin_setter_functions", () => {
     
     console.log("Your transaction signature", tx);
 
-    const accountData = await program.account.pushCommStorageV3.fetch(storage);
+    const accountData = await program.account.pushCommStorage.fetch(storage);
     
     expect(accountData.paused).to.eq(false);
 
@@ -283,7 +283,7 @@ describe("push_comm_admin_setter_functions", () => {
     
     console.log("Your transaction signature", tx);
 
-    const accountData = await program.account.pushCommStorageV3.fetch(storage);
+    const accountData = await program.account.pushCommStorage.fetch(storage);
     
     expect(accountData.pushChannelAdmin.toString()).to.eq(admin_temp.publicKey.toString());
 

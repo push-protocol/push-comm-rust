@@ -3,7 +3,7 @@ import * as anchor from "@coral-xyz/anchor";
 import { expect } from "chai";
 // SEEDS for TESTS
 export const SEEDS = {
-    PUSH_COMM_STORAGE: Buffer.from("push_comm_storage_v3"),
+    PUSH_COMM_STORAGE: Buffer.from("push_comm_storage"),
     USER_STORAGE: Buffer.from("user_storage"),
     SUBSCRIPTION: Buffer.from("is_subscribed"),
     DELEGATE : Buffer.from("delegate"),

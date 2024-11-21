@@ -54,7 +54,7 @@ describe("push_comm_subscription_tests", () => {
   afterEach(async () => {
     const [storage, bump] = await anchor.web3.PublicKey.findProgramAddressSync([SEEDS.PUSH_COMM_STORAGE], program.programId);
     // Fetch the storage account to verify admin settings after each test
-    const storageAccount = await program.account.pushCommStorageV3.fetch(storage);
+    const storageAccount = await program.account.pushCommStorage.fetch(storage);
 
     const currentAdmin = storageAccount.pushChannelAdmin;
     // Check if current admin is pushAdmin
@@ -74,7 +74,7 @@ describe("push_comm_subscription_tests", () => {
       console.log(`Transferred admin ownership back to pushAdmin from ${currentAdmin.toString()}`);
 
       // Fetch the storage account again to confirm
-      const updatedStorageAccount = await program.account.pushCommStorageV3.fetch(storage);
+      const updatedStorageAccount = await program.account.pushCommStorage.fetch(storage);
       assert.strictEqual(
         updatedStorageAccount.pushChannelAdmin.toString(),
         pushAdmin.publicKey.toString(),
@@ -97,7 +97,7 @@ describe("push_comm_subscription_tests", () => {
       console.log("Unpaused the contract");
 
       // Fetch the storage account again to confirm
-      const updatedStorageAccount = await program.account.pushCommStorageV3.fetch(storage);
+      const updatedStorageAccount = await program.account.pushCommStorage.fetch(storage);
       assert.strictEqual(updatedStorageAccount.paused, false, "Failed to unpause the contract");
     }
   });
@@ -116,7 +116,7 @@ describe("push_comm_subscription_tests", () => {
     }).signers([pushAdmin]).rpc();
 
     // Fetch the initialized account and check initial values
-    const accountData = await program.account.pushCommStorageV3.fetch(storage);
+    const accountData = await program.account.pushCommStorage.fetch(storage);
 
     expect(accountData.chainCluster.toString()).to.equal(chainCluster.toString());
     expect(accountData.governance.toString()).to.eq(pushAdmin.publicKey.toString());
@@ -556,7 +556,7 @@ describe("push_comm_subscription_tests", () => {
 
       // Fetch the comm storage to check user count
       // To-Do: Fix the overall counting of users in beforeEach hook
-      // const commStorage = await program.account.pushCommStorageV3.fetch(storageAccount);
+      // const commStorage = await program.account.pushCommStorage.fetch(storageAccount);
       // expect(commStorage.userCount.toNumber()).to.equal(3); - Might not work as expected as user count is not updated in beforeEach hook
 
       // Fetch the user storage account to verify state updates for subscribe

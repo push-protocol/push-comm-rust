@@ -4,7 +4,7 @@ use anchor_lang::prelude::*;
 
 // Core Storage
 #[account]
-pub struct PushCommStorageV3 {
+pub struct PushCommStorage {
     pub governance: Pubkey,
     pub push_channel_admin: Pubkey,
     pub chain_cluster: String, // devnet, testnet or mainnet-beta
@@ -46,7 +46,7 @@ pub struct UserNotificationSettings{
     pub const MAX_NOTIF_SETTINGS_LENGTH: usize = 100; // Adjust as needed
 
 // Constants for Seeds
-    pub const PUSH_COMM_STORAGE: &[u8] = b"push_comm_storage_v3";
+    pub const PUSH_COMM_STORAGE: &[u8] = b"push_comm_storage";
     pub const USER_STORAGE: &[u8] = b"user_storage";
     pub const SUBSCRIPTION: &[u8] = b"is_subscribed";
     pub const DELEGATE: &[u8] = b"delegate";

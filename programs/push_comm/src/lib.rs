@@ -11,7 +11,7 @@ use crate::state::*;
 use crate::errors::*;
 use crate::events::*;
 
-declare_id!("8WQie28DNTw7WYKEzaJeiMxa6BMYXcxQfAeW1ZZwoX6K");
+declare_id!("4paT684azMaEFar5otU4qpBh2Q9xwDN6MQfS2Yxn8Dh8");
 
 #[program]
 pub mod push_comm {
@@ -200,7 +200,7 @@ pub mod push_comm {
 /*
 * PRIVATE HELPER FUNCTIONS
 */
-fn _add_user(user_storage: &mut Account<UserStorage>, comm_storage: &mut Account<PushCommStorageV3>) -> Result<()> {
+fn _add_user(user_storage: &mut Account<UserStorage>, comm_storage: &mut Account<PushCommStorage>) -> Result<()> {
     if !user_storage.user_activated {
         user_storage.user_activated = true;
         user_storage.user_start_block = Clock::get()?.slot;
@@ -253,10 +253,10 @@ pub struct InitializeCTX<'info>{
     #[account(
         init,
         payer = signer,
-        space = size_of::<PushCommStorageV3>() + 8,
+        space = size_of::<PushCommStorage>() + 8,
         seeds = [PUSH_COMM_STORAGE],
         bump)]
-    pub storage: Account<'info, PushCommStorageV3>,
+    pub storage: Account<'info, PushCommStorage>,
 
     #[account(mut)]
     pub signer: Signer<'info>,
@@ -267,7 +267,7 @@ pub struct InitializeCTX<'info>{
 #[derive(Accounts)]
 pub struct AdminStorageUpdateCTX<'info> {
     #[account(mut, seeds = [PUSH_COMM_STORAGE], bump, has_one = push_channel_admin @ PushCommError::Unauthorized)]
-    pub storage: Account<'info, PushCommStorageV3>,
+    pub storage: Account<'info, PushCommStorage>,
 
     #[account(signer)]
     pub push_channel_admin: Signer<'info>,
@@ -277,7 +277,7 @@ pub struct AdminStorageUpdateCTX<'info> {
 #[derive(Accounts)]
 pub struct AliasVerificationCTX <'info > {
     #[account(seeds = [PUSH_COMM_STORAGE], bump)]
-    pub storage: Account<'info, PushCommStorageV3>,
+    pub storage: Account<'info, PushCommStorage>,
 
     #[account(signer)]
     pub signer: Signer<'info>,
@@ -305,7 +305,7 @@ pub struct SubscriptionCTX<'info> {
     pub subscription: Account<'info, Subscription>,
     
     #[account(mut, seeds = [PUSH_COMM_STORAGE], bump)]
-    pub comm_storage: Account<'info, PushCommStorageV3>,
+    pub comm_storage: Account<'info, PushCommStorage>,
 
     #[account(mut)]
     pub signer: Signer<'info>,
