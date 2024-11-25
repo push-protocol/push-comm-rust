@@ -94,7 +94,6 @@ pub mod push_comm {
         require!(channel_address.len() <= 64, PushCommError::InvalidArgument);
 
         let storage = &mut ctx.accounts.storage;
-        require!(!storage.paused, PushCommError::ContractPaused);
 
         emit!(ChannelAlias {
             chain_name: CHAIN_NAME.to_string(),
