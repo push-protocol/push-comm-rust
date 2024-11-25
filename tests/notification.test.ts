@@ -335,26 +335,20 @@ describe("push_comm_subscription_tests", () => {
       expect(delegateStorageData.delegate.toString()).to.eq(delegate1.publicKey.toString());
       expect(delegateStorageData.isDelegate).to.eq(true);
 
-      try {
-        await program.methods.addDelegate(delegate1.publicKey).accounts({
-          storage: delegateStroage,
-          signer: channel1.publicKey,
-          systemProgram: anchor.web3.SystemProgram.programId,
-        }).signers([channel1]).rpc();
+      await program.methods.addDelegate(delegate1.publicKey).accounts({
+        storage: delegateStroage,
+        signer: channel1.publicKey,
+        systemProgram: anchor.web3.SystemProgram.programId,
+      }).signers([channel1]).rpc();
 
-        assert.fail("Adding a delegate twice should revert an error");
-      }catch (_err) {
-        assert.isTrue(_err instanceof anchor.AnchorError, "Error is not an Anchor Error");
-        const err: anchor.AnchorError = _err;
-        const expectedErrorMsg = ERRORS.DelegateAlreadyAdded;
-        assert.strictEqual(err.error.errorMessage, expectedErrorMsg, `Error message should be: ${expectedErrorMsg}`);
-      }
-      
-
-
+      // Fetch the delegate_storage account again to verify the delegate addition
+      const delegateStorageData2 = await program.account.delegatedNotificationSenders.fetch(delegateStroage);
+      expect(delegateStorageData2.channel.toString()).to.eq(channel1.publicKey.toString());
+      expect(delegateStorageData2.delegate.toString()).to.eq(delegate1.publicKey.toString());
+      expect(delegateStorageData2.isDelegate).to.eq(true);
     });
 
-    it("Channel1 adding itself as a delegate multiple times should fail", async () => {
+    it("Channel1 adding itself as a delegate multiple times should not fail", async () => {
       const [delegateStorage] = await anchor.web3.PublicKey.findProgramAddressSync(
         [SEEDS.DELEGATE, channel1.publicKey.toBuffer(), channel1.publicKey.toBuffer()],
         program.programId
@@ -366,23 +360,24 @@ describe("push_comm_subscription_tests", () => {
         signer: channel1.publicKey,
         systemProgram: anchor.web3.SystemProgram.programId,
       }).signers([channel1]).rpc();
-    
-      // Attempt to add channel1 as a delegate again (should fail)
-      try {
-        await program.methods.addDelegate(channel1.publicKey).accounts({
-          storage: delegateStorage,
-          signer: channel1.publicKey,
-          systemProgram: anchor.web3.SystemProgram.programId,
-        }).signers([channel1]).rpc();
-    
-        // If the transaction succeeds, fail the test because it shouldn't happen
-        assert.fail("Adding a delegate twice should revert an error");
-      } catch (_err) {
-        assert.isTrue(_err instanceof anchor.AnchorError, "Error is not an Anchor Error");
-        const err: anchor.AnchorError = _err;
-        const expectedErrorMsg = ERRORS.DelegateAlreadyAdded;
-        assert.strictEqual(err.error.errorMessage, expectedErrorMsg, `Error message should be: ${expectedErrorMsg}`);
-      }
+
+      await program.methods.addDelegate(channel1.publicKey).accounts({
+        storage: delegateStorage,
+        signer: channel1.publicKey,
+        systemProgram: anchor.web3.SystemProgram.programId,
+      }).signers([channel1]).rpc();
+
+      await program.methods.addDelegate(channel1.publicKey).accounts({
+        storage: delegateStorage,
+        signer: channel1.publicKey,
+        systemProgram: anchor.web3.SystemProgram.programId,
+      }).signers([channel1]).rpc();
+
+      // Fetch the delegate_storage account to verify the delegate addition
+      const delegateStorageData = await program.account.delegatedNotificationSenders.fetch(delegateStorage);
+      expect(delegateStorageData.channel.toString()).to.eq(channel1.publicKey.toString());
+      expect(delegateStorageData.delegate.toString()).to.eq(channel1.publicKey.toString());
+      expect(delegateStorageData.isDelegate).to.eq(true);
     });
     
 
@@ -402,48 +397,56 @@ describe("push_comm_subscription_tests", () => {
         signer: channel1.publicKey,
         systemProgram: anchor.web3.SystemProgram.programId,
       }).signers([channel1]).rpc();
-    
-      try {
-        await program.methods.removeDelegate(delegate1.publicKey).accounts({
-          storage: delegateStroage,
-          signer: channel1.publicKey,
-          systemProgram: anchor.web3.SystemProgram.programId,
-        }).signers([channel1]).rpc();
 
-        assert.fail("Removing a delegate twice should revert an error");
-      }catch (_err) {
-        assert.isTrue(_err instanceof anchor.AnchorError, "Error is not an Anchor Error");
-        const err: anchor.AnchorError = _err;
-        const expectedErrorMsg = ERRORS.DelegateNotFound;
-        assert.strictEqual(err.error.errorMessage, expectedErrorMsg, `Error message should be: ${expectedErrorMsg}`);
-      }
-      
+      // Remove delegate1 again
+      await program.methods.removeDelegate(delegate1.publicKey).accounts({
+        storage: delegateStroage,
+        signer: channel1.publicKey,
+        systemProgram: anchor.web3.SystemProgram.programId,
+      }).signers([channel1]).rpc();
 
-
+      // Fetch the delegate_storage account to verify the delegate removal
+      let delegateStorageData_after = await program.account.delegatedNotificationSenders.fetch(delegateStroage);
+      expect(delegateStorageData_after.channel.toString()).to.eq(channel1.publicKey.toString());
+      expect(delegateStorageData_after.delegate.toString()).to.eq(delegate1.publicKey.toString());
+      expect(delegateStorageData_after.isDelegate).to.eq(false);
     });
 
     it("Adding a delegate should EMIT accurate event", async () => {
-      const [delegateStroage] = await anchor.web3.PublicKey.findProgramAddressSync([SEEDS.DELEGATE, channel1.publicKey.toBuffer(), delegate1.publicKey.toBuffer()], program.programId);
-
-       let addDelegateEvent: any = null;
-
-       const listner = program.addEventListener('AddDelegate', (event, slot) => {
-        addDelegateEvent = event;  
-       })
-        // Initialize delegate_storage by adding delegate1
-        await program.methods.addDelegate(delegate1.publicKey).accounts({
-          storage: delegateStroage,
-          signer: channel1.publicKey,
-          systemProgram: anchor.web3.SystemProgram.programId,
-        }).signers([channel1]).rpc();
-
-         await new Promise((resolve) => setTimeout(resolve, 1000));
-         await program.removeEventListener(listner);
-
-         expect(addDelegateEvent).to.not.be.null;
-         expect(addDelegateEvent.channel.toString()).to.eq(channel1.publicKey.toString());
-         expect(addDelegateEvent.delegate.toString()).to.eq(delegate1.publicKey.toString());
-
+      const [delegateStorage] = await anchor.web3.PublicKey.findProgramAddressSync(
+        [SEEDS.DELEGATE, channel1.publicKey.toBuffer(), delegate1.publicKey.toBuffer()],
+        program.programId
+      );
+    
+      let addDelegateEvent: any = null;
+    
+      // Add event listener and log to confirm it's active
+      const listener = await program.addEventListener('AddDelegate', (event, slot) => {
+        addDelegateEvent = event;
+      });
+    
+      // Call the addDelegate method
+      try {
+        await program.methods.addDelegate(delegate1.publicKey)
+          .accounts({
+            storage: delegateStorage,
+            signer: channel1.publicKey,
+            systemProgram: anchor.web3.SystemProgram.programId,
+          })
+          .signers([channel1])
+          .rpc();
+      } catch (err) {
+        console.error("Transaction failed:", err); // Debug transaction failures
+      }
+    
+      // Wait for event and clean up listener
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      await program.removeEventListener(listener);
+    
+      // Assertions
+      expect(addDelegateEvent).to.not.be.null;
+      expect(addDelegateEvent.channel.toString()).to.eq(channel1.publicKey.toString());
+      expect(addDelegateEvent.delegate.toString()).to.eq(delegate1.publicKey.toString());
     });
 
     it("Removing a delegate should EMIT accurate event", async () => {

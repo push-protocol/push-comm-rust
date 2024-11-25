@@ -147,16 +147,17 @@ pub mod push_comm {
     // Notification-Specific Functions
     pub fn add_delegate(ctx: Context<DelegateNotifSenders>, delegate: Pubkey) -> Result<()> {
         let storage = &mut ctx.accounts.storage;
-        require!( !storage.is_delegate, PushCommError::DelegateAlreadyAdded);
 
-        storage.channel = ctx.accounts.signer.key();
-        storage.delegate = delegate;
-        storage.is_delegate = true;
-        
-        emit!(AddDelegate {
-            channel: ctx.accounts.signer.key(),
-            delegate: ctx.accounts.storage.delegate,
-        });
+        if !storage.is_delegate {
+            storage.channel = ctx.accounts.signer.key();
+            storage.delegate = delegate;
+            storage.is_delegate = true;
+            
+            emit!(AddDelegate {
+                channel: ctx.accounts.signer.key(),
+                delegate: ctx.accounts.storage.delegate,
+            });
+        }
 
         Ok(())
     }
@@ -166,16 +167,16 @@ pub mod push_comm {
     ) -> Result<()>{
         let storage = &mut ctx.accounts.storage;
 
-        require!(storage.is_delegate, PushCommError::DelegateNotFound);
+        if storage.is_delegate {
+            storage.channel = ctx.accounts.signer.key();
+            storage.delegate = delegate;
+            storage.is_delegate = false;
 
-        storage.channel = ctx.accounts.signer.key();
-        storage.delegate = delegate;
-        storage.is_delegate = false;
-
-        emit!(RemoveDelegate {
-            channel: ctx.accounts.signer.key(),
-            delegate: ctx.accounts.storage.delegate,
-        });
+            emit!(RemoveDelegate {
+                channel: ctx.accounts.signer.key(),
+                delegate: ctx.accounts.storage.delegate,
+            });
+        }
         Ok(())
     }
 
