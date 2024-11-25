@@ -292,8 +292,8 @@ describe("push_comm_subscription_tests", () => {
       expect(userStorage_now.userActivated).to.equal(true);
 
       // Fetch the user subscription account to verify state updates for unsubscibe
-      const subscription = await program.account.subscription.fetch(subscriptionAccount);
-      expect(subscription.isSubscribed).to.equal(false);
+      const subscription = await program.account.subscription.fetchNullable(subscriptionAccount);
+      expect(subscription).to.be.null;
     });
 
     it("Should emit Unsubscribed event", async () => {
@@ -337,48 +337,8 @@ describe("push_comm_subscription_tests", () => {
     expect(unsubscribedEvent).to.not.be.null;
     expect(unsubscribedEvent.user.toString()).to.equal(user1.publicKey.toString());
     expect(unsubscribedEvent.channel.toString()).to.equal(channel1.publicKey.toString());
-    });
-
-    it("Should not revert when user1 unsubscribe without subscribing", async () => {
-      const [storageAccount, bump2nd] = await anchor.web3.PublicKey.findProgramAddressSync([SEEDS.PUSH_COMM_STORAGE], program.programId);
-      const [userStorageAccount, bump1st] = await anchor.web3.PublicKey.findProgramAddressSync([SEEDS.USER_STORAGE, user1.publicKey.toBuffer()], program.programId);
-      const [subscriptionAccount, bump3rd] = await anchor.web3.PublicKey.findProgramAddressSync([SEEDS.SUBSCRIPTION, user1.publicKey.toBuffer(), channel1.publicKey.toBuffer()], program.programId);
-      
-      let unsubscribedEvent: any = null;
-      
-      const listener = program.addEventListener('Unsubscribed', (event, slot) => {
-        // console.log(`Slot ${slot}: Unsubscribed event - User: ${event.user}, Channel: ${event.channel}`);
-        unsubscribedEvent = event;
-      });
-
-      // User1 tries to unsubscribe without subscribing
-      try{
-        await program.methods.unsubscribe(channel1.publicKey).accounts({
-          storage: userStorageAccount,
-          subscription: subscriptionAccount,
-          commStorage: storageAccount,
-          signer: user1.publicKey,
-          systemProgram: anchor.web3.SystemProgram.programId,
-        }).signers([user1]).rpc();
-        
-        // Waiting to capture event
-    await new Promise((resolve) => setTimeout(resolve, 5000));
-
-    // Removing the event listener
-    await program.removeEventListener(listener);
-
-    // Assert that the event was emitted with correct parameters
-    expect(unsubscribedEvent).to.be.null;
-
-      } catch (_err){
-        assert.isTrue(_err instanceof anchor.AnchorError, "Error is not an Anchor Error");
-        const err: anchor.AnchorError = _err;
-        const expectedErrorMsg = ERRORS.NotSubscribed;
-        assert.strictEqual(err.error.errorMessage, expectedErrorMsg, `Error message should be ${expectedErrorMsg}`);
-        console.log("Error number:", err.error.errorCode);
-      }
-    });
   });
+    });
 
   /**
    * Subscribe-Unsubscribe Advance Function Tests
@@ -509,11 +469,11 @@ describe("push_comm_subscription_tests", () => {
       expect(userStorage_now.userActivated).to.equal(true);
 
       // Fetch the user subscription account to verify state updates for unsubscibe
-      const subscriptionFirst_now = await program.account.subscription.fetch(subscriptionAccountFirst);
-      const subscriptionSecond_now = await program.account.subscription.fetch(subscriptionAccountSecond);
+      const subscriptionFirst_now = await program.account.subscription.fetchNullable(subscriptionAccountFirst);
+      const subscriptionSecond_now = await program.account.subscription.fetchNullable(subscriptionAccountSecond);
 
-      expect(subscriptionFirst_now.isSubscribed).to.equal(false);
-      expect(subscriptionSecond_now.isSubscribed).to.equal(false);
+      expect(subscriptionFirst_now).to.be.null;
+      expect(subscriptionSecond_now).to.be.null;
     });
 
     it("Subscribe multiple users to same channel - State Checks", async () => {

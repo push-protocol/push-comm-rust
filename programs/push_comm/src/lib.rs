@@ -104,14 +104,14 @@ pub mod push_comm {
         Ok(())
     }
 
-    pub fn subscribe(ctx: Context<SubscriptionCTX>, channel: Pubkey) -> Result<()> {
+    pub fn subscribe(ctx: Context<SubscribeCTX>, channel: Pubkey) -> Result<()> {
         _add_user(&mut ctx.accounts.storage, &mut ctx.accounts.comm_storage)?;
         _subscribe(&mut ctx.accounts.storage, &mut ctx.accounts.subscription, ctx.accounts.signer.key(), channel)?;
 
         Ok(())
     }
 
-    pub fn unsubscribe(ctx: Context<SubscriptionCTX>, channel: Pubkey) -> Result<()>{
+    pub fn unsubscribe(ctx: Context<UnsubscribeCTX>, channel: Pubkey) -> Result<()>{
         _unsubscribe(&mut ctx.accounts.storage, &mut ctx.accounts.subscription, ctx.accounts.signer.key(), channel)?;
 
         Ok(())
@@ -296,7 +296,7 @@ pub struct AliasVerificationCTX <'info > {
 
 #[derive(Accounts)]
 #[instruction(channel: Pubkey)]
-pub struct SubscriptionCTX<'info> {
+pub struct SubscribeCTX<'info> {
     #[account(
         init_if_needed,
         payer = signer,
@@ -312,6 +312,34 @@ pub struct SubscriptionCTX<'info> {
         space = 8 + 1, // discriminator + bool
         seeds = [SUBSCRIPTION, signer.key().as_ref(), channel.key().as_ref()],
         bump
+    )]
+    pub subscription: Account<'info, Subscription>,
+    
+    #[account(mut, seeds = [PUSH_COMM_STORAGE], bump)]
+    pub comm_storage: Account<'info, PushCommStorage>,
+
+    #[account(mut)]
+    pub signer: Signer<'info>,
+    pub system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
+#[instruction(channel: Pubkey)]
+pub struct UnsubscribeCTX<'info> {
+    #[account(
+        init_if_needed,
+        payer = signer,
+        space = 8 + 1 + 8 + 8, // discriminator + bool + u64 + u64
+        seeds = [USER_STORAGE, signer.key().as_ref()],
+        bump
+    )]
+    pub storage: Account<'info, UserStorage>,
+
+    #[account(
+        mut,
+        seeds = [SUBSCRIPTION, signer.key().as_ref(), channel.key().as_ref()],
+        bump,
+        close = signer
     )]
     pub subscription: Account<'info, Subscription>,
     
