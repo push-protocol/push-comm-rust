@@ -137,7 +137,7 @@ describe("push_comm_subscription_tests", () => {
 
   /**
    * Notification Settings Function Tests
-   * 1. Should emit UserNotifcationSettingsAdded event
+   * 1. Should emit UserNotificationSettingsAdded event
    * 2. Should update states as expected
    * 3. Should only allow MAX_LENGTH for notif_setting string
    * 4. The caller must be subscribed to the channel to add notification settings
@@ -178,7 +178,7 @@ describe("push_comm_subscription_tests", () => {
           let notificationSettingEvent: any = null;
         
           // Listen for the SendNotification event
-          const listener = program.addEventListener('UserNotifcationSettingsAdded', (event, slot) => {
+          const listener = program.addEventListener('UserNotificationSettingsAdded', (event, slot) => {
             //console.log('Event Emitted:', event);
     
             notificationSettingEvent = event;

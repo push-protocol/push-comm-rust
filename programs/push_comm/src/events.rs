@@ -39,7 +39,7 @@ pub struct SendNotification{
 }
 
 #[event]
-pub struct UserNotifcationSettingsAdded{
+pub struct UserNotificationSettingsAdded{
     pub channel: Pubkey,
     pub user: Pubkey,
     pub notif_id: u64,

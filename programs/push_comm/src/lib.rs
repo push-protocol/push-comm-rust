@@ -134,7 +134,7 @@ pub mod push_comm {
         let notif_setting_data = format!("{}+{}", notif_id.to_string(), notif_settings);
         storage.notif_settings = notif_setting_data.clone();
 
-        emit!(UserNotifcationSettingsAdded {
+        emit!(UserNotificationSettingsAdded {
             channel: channel,
             user: ctx.accounts.signer.key(),
             notif_id: notif_id,
