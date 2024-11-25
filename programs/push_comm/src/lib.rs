@@ -145,7 +145,7 @@ pub mod push_comm {
     }
 
     // Notification-Specific Functions
-    pub fn add_delegate(ctx: Context<DelegateNotifSenders>, delegate: Pubkey) -> Result<()> {
+    pub fn add_delegate(ctx: Context<AddDelegateNotifSenders>, delegate: Pubkey) -> Result<()> {
         let storage = &mut ctx.accounts.storage;
 
         if !storage.is_delegate {
@@ -162,7 +162,7 @@ pub mod push_comm {
         Ok(())
     }
 
-    pub fn remove_delegate(ctx: Context<DelegateNotifSenders>,
+    pub fn remove_delegate(ctx: Context<RemoveDelegateNotifSenders>,
         delegate: Pubkey
     ) -> Result<()>{
         let storage = &mut ctx.accounts.storage;
@@ -177,9 +177,10 @@ pub mod push_comm {
                 delegate: ctx.accounts.storage.delegate,
             });
         }
+    
         Ok(())
     }
-
+    
     pub fn send_notification(
         ctx: Context<SendNotificationCTX>,
         channel: Pubkey,
@@ -344,13 +345,28 @@ pub struct UserChannelSettingsCTX<'info> {
 // Notification-Specific CTXs
 #[derive(Accounts)]
 #[instruction(delegate: Pubkey)]
-pub struct DelegateNotifSenders <'info>{
+pub struct AddDelegateNotifSenders <'info>{
     #[account(
         init_if_needed,
         payer = signer,
         space = 8 + 32 + 32 + 1, // discriminator + channel + delegate + bool
         seeds = [DELEGATE, signer.key().as_ref(), delegate.key().as_ref()],
         bump )]
+    pub storage: Account<'info, DelegatedNotificationSenders>,
+
+    #[account(mut)]
+    pub signer: Signer<'info>,
+    pub system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
+#[instruction(delegate: Pubkey)]
+pub struct RemoveDelegateNotifSenders <'info>{
+    #[account(
+        mut,
+        seeds = [DELEGATE, signer.key().as_ref(), delegate.key().as_ref()],
+        bump,
+        close = signer )]
     pub storage: Account<'info, DelegatedNotificationSenders>,
 
     #[account(mut)]

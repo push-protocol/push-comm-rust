@@ -187,10 +187,8 @@ describe("push_comm_subscription_tests", () => {
       }).signers([channel1]).rpc();
 
       // Fetch the delegate_storage account to verify the delegate removal
-      let delegateStorageData_after = await program.account.delegatedNotificationSenders.fetch(delegateStroage);
-      expect(delegateStorageData_after.channel.toString()).to.eq(channel1.publicKey.toString());
-      expect(delegateStorageData_after.delegate.toString()).to.eq(delegate1.publicKey.toString());
-      expect(delegateStorageData_after.isDelegate).to.eq(false);
+      let delegateStorageData_after = await program.account.delegatedNotificationSenders.fetchNullable(delegateStroage);
+      expect(delegateStorageData_after).to.be.null;
     });
 
     it("Channel1 adds delegate1 & delegate2", async () => {
@@ -259,22 +257,18 @@ describe("push_comm_subscription_tests", () => {
         systemProgram: anchor.web3.SystemProgram.programId,
       }).signers([channel1]).rpc();
 
+      // Fetch the delegate_storage account to verify the delegate removal
+      let delegateStorageData_after = await program.account.delegatedNotificationSenders.fetchNullable(delegateStroage);
+      expect(delegateStorageData_after).to.be.null;
+
       await program.methods.removeDelegate(delegate2.publicKey).accounts({
         storage: delegateStroage2nd,
         signer: channel1.publicKey,
         systemProgram: anchor.web3.SystemProgram.programId,
       }).signers([channel1]).rpc();
 
-      // Fetch the delegate_storage account to verify the delegate addition
-      const delegateStorageData_after = await program.account.delegatedNotificationSenders.fetch(delegateStroage);
-      expect(delegateStorageData_after.channel.toString()).to.eq(channel1.publicKey.toString());
-      expect(delegateStorageData_after.delegate.toString()).to.eq(delegate1.publicKey.toString());
-      expect(delegateStorageData_after.isDelegate).to.eq(false);
-
-      const delegateStorageData2nd_after = await program.account.delegatedNotificationSenders.fetch(delegateStroage2nd);
-      expect(delegateStorageData2nd_after.channel.toString()).to.eq(channel1.publicKey.toString());
-      expect(delegateStorageData2nd_after.delegate.toString()).to.eq(delegate2.publicKey.toString());
-      expect(delegateStorageData2nd_after.isDelegate).to.eq(false);
+      const delegateStorageData2nd_after = await program.account.delegatedNotificationSenders.fetchNullable(delegateStroage2nd);
+      expect(delegateStorageData2nd_after).to.be.null;
     });
 
     it("Channel1 adds - removes - adds back delegate1", async () => {
@@ -300,10 +294,8 @@ describe("push_comm_subscription_tests", () => {
       }).signers([channel1]).rpc();
 
       // Fetch the delegate_storage account to verify the delegate addition
-      const delegateStorageData_after = await program.account.delegatedNotificationSenders.fetch(delegateStroage);
-      expect(delegateStorageData_after.channel.toString()).to.eq(channel1.publicKey.toString());
-      expect(delegateStorageData_after.delegate.toString()).to.eq(delegate1.publicKey.toString());
-      expect(delegateStorageData_after.isDelegate).to.eq(false);
+      const delegateStorageData_after = await program.account.delegatedNotificationSenders.fetchNullable(delegateStroage);
+      expect(delegateStorageData_after).to.be.null;
 
       // Add delegate1 again
       await program.methods.addDelegate(delegate1.publicKey).accounts({
@@ -398,18 +390,22 @@ describe("push_comm_subscription_tests", () => {
         systemProgram: anchor.web3.SystemProgram.programId,
       }).signers([channel1]).rpc();
 
-      // Remove delegate1 again
-      await program.methods.removeDelegate(delegate1.publicKey).accounts({
-        storage: delegateStroage,
-        signer: channel1.publicKey,
-        systemProgram: anchor.web3.SystemProgram.programId,
-      }).signers([channel1]).rpc();
+       // Fetch the delegate_storage account to verify the delegate addition
+       const delegateStorageData_after = await program.account.delegatedNotificationSenders.fetchNullable(delegateStroage);
+       expect(delegateStorageData_after).to.be.null;
 
-      // Fetch the delegate_storage account to verify the delegate removal
-      let delegateStorageData_after = await program.account.delegatedNotificationSenders.fetch(delegateStroage);
-      expect(delegateStorageData_after.channel.toString()).to.eq(channel1.publicKey.toString());
-      expect(delegateStorageData_after.delegate.toString()).to.eq(delegate1.publicKey.toString());
-      expect(delegateStorageData_after.isDelegate).to.eq(false);
+      try {
+        // Remove delegate1 again
+        await program.methods.removeDelegate(delegate1.publicKey).accounts({
+          storage: delegateStroage,
+          signer: channel1.publicKey,
+          systemProgram: anchor.web3.SystemProgram.programId,
+        }).signers([channel1]).rpc();
+
+        assert.fail("Removing a delegate twice should revert an error");
+      } catch (_err) {
+        assert.isTrue(_err instanceof anchor.AnchorError, "Error is not an Anchor Error");
+      }
     });
 
     it("Adding a delegate should EMIT accurate event", async () => {
