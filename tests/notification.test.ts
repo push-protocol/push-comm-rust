@@ -417,7 +417,7 @@ describe("push_comm_subscription_tests", () => {
       let addDelegateEvent: any = null;
     
       // Add event listener and log to confirm it's active
-      const listener = await program.addEventListener('AddDelegate', (event, slot) => {
+      const listener = await program.addEventListener('addDelegate', (event, slot) => {
         addDelegateEvent = event;
       });
     
@@ -456,7 +456,7 @@ describe("push_comm_subscription_tests", () => {
         }).signers([channel1]).rpc();
        let removeDelegateEvent: any = null;
 
-       const listner = program.addEventListener('RemoveDelegate', (event, slot) => {
+       const listner = program.addEventListener('removeDelegate', (event, slot) => {
         removeDelegateEvent = event;  
        })
         // Removing delegate1 
@@ -505,7 +505,7 @@ describe("push_comm_subscription_tests", () => {
         
         let notificationEvent: any = null;
 
-        const listner = program.addEventListener('SendNotification', (event, slot) => {
+        const listner = program.addEventListener('sendNotification', (event, slot) => {
           notificationEvent = event;  
         })
         // Channel1 Sends notification to USER1
@@ -544,7 +544,7 @@ describe("push_comm_subscription_tests", () => {
         
         let notificationEvent: any = null;
 
-        const listner = program.addEventListener('SendNotification', (event, slot) => {
+        const listner = program.addEventListener('sendNotification', (event, slot) => {
           notificationEvent = event;  
         })
         // Channel1 Sends notification to USER1
@@ -575,7 +575,7 @@ describe("push_comm_subscription_tests", () => {
         
         let notificationEvent: any = null;
 
-        const listner = program.addEventListener('SendNotification', (event, slot) => {
+        const listner = program.addEventListener('sendNotification', (event, slot) => {
           notificationEvent = event;  
         })
         // Channel1 Sends notification to USER1
@@ -615,7 +615,7 @@ describe("push_comm_subscription_tests", () => {
         let sendNotificationEvent: any = null;
       
         // Listen for the SendNotification event
-        const listener = program.addEventListener('SendNotification', (event, slot) => {
+        const listener = program.addEventListener('sendNotification', (event, slot) => {
           sendNotificationEvent = event;
         });
       
@@ -645,7 +645,7 @@ describe("push_comm_subscription_tests", () => {
         let sendNotificationEvent: any = null;
       
         // Listen for the SendNotification event
-        const listener = program.addEventListener('SendNotification', (event, slot) => {
+        const listener = program.addEventListener('sendNotification', (event, slot) => {
           sendNotificationEvent = event;
         });
       
@@ -694,7 +694,7 @@ describe("push_comm_subscription_tests", () => {
         let sendNotificationEvent: any = null;
       
         // Listen for the SendNotification event
-        const listener = program.addEventListener('SendNotification', (event, slot) => {
+        const listener = program.addEventListener('sendNotification', (event, slot) => {
           sendNotificationEvent = event;
         });
       
@@ -743,7 +743,7 @@ describe("push_comm_subscription_tests", () => {
       
         // Event listener for SendNotification
         let notificationEvent: any = null;
-        const listener = program.addEventListener('SendNotification', (event, slot) => {
+        const listener = program.addEventListener('sendNotification', (event, slot) => {
           notificationEvent = event;
         });
       
@@ -769,7 +769,7 @@ describe("push_comm_subscription_tests", () => {
       
         // Step 5: Reset the event listener for the next delegate
         notificationEvent = null;
-        const secondListener = program.addEventListener('SendNotification', (event, slot) => {
+        const secondListener = program.addEventListener('sendNotification', (event, slot) => {
           notificationEvent = event;
         });
       

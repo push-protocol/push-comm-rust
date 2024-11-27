@@ -176,7 +176,7 @@ describe("push_comm_subscription_tests", () => {
           
         let subscribedEvent: any = null;
         
-        const listener = program.addEventListener('Subscribed', (event, slot) => {
+        const listener = program.addEventListener('subscribed', (event, slot) => {
           // console.log(`Slot ${slot}: Subscribed event - User: ${event.user}, Channel: ${event.channel}`);
           subscribedEvent = event;
         });
@@ -218,7 +218,7 @@ describe("push_comm_subscription_tests", () => {
 
         let subscribedEvent: any = null;
         
-        const listener = program.addEventListener('Subscribed', (event, slot) => {
+        const listener = program.addEventListener('subscribed', (event, slot) => {
           // console.log(`Slot ${slot}: Subscribed event - User: ${event.user}, Channel: ${event.channel}`);
           subscribedEvent = event;
         });
@@ -313,7 +313,7 @@ describe("push_comm_subscription_tests", () => {
 
       let unsubscribedEvent: any = null;
       
-      const listener = program.addEventListener('Unsubscribed', (event, slot) => {
+      const listener = program.addEventListener('unsubscribed', (event, slot) => {
         // console.log(`Slot ${slot}: Unsubscribed event - User: ${event.user}, Channel: ${event.channel}`);
         unsubscribedEvent = event;
       });

@@ -178,7 +178,7 @@ describe("push_comm_subscription_tests", () => {
           let notificationSettingEvent: any = null;
         
           // Listen for the SendNotification event
-          const listener = program.addEventListener('UserNotificationSettingsAdded', (event, slot) => {
+          const listener = program.addEventListener('userNotificationSettingsAdded', (event, slot) => {
             //console.log('Event Emitted:', event);
     
             notificationSettingEvent = event;
