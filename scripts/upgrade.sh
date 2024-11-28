@@ -16,10 +16,8 @@ case $NETWORK in
     ;;
   devnet)
     export ANCHOR_PROVIDER_URL="$PROVIDER_DEVNET"
-    echo "Requesting airdrop for Devnet..."
-    solana airdrop 0.2 --url "$ANCHOR_PROVIDER_URL"
     ;;
-  mainnet)
+  mainnet-beta)
     export ANCHOR_PROVIDER_URL="$PROVIDER_MAINNET"
     ;;
   *)

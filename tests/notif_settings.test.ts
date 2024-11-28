@@ -1,10 +1,11 @@
 import * as anchor from "@coral-xyz/anchor";
 import { Program } from "@coral-xyz/anchor";
 import { PushComm } from "../target/types/push_comm";
-import chaiAsPromised from "chai-as-promised";
 import { SEEDS, ERRORS, fundAccount } from './utils';
 
 import { assert, expect } from "chai";
+const fs = require('fs');
+const path = require('path');
 
 describe("push_comm_subscription_tests", () => {
   const provider = anchor.AnchorProvider.env(); // Get the provider for accessing the wallet
@@ -117,14 +118,19 @@ describe("push_comm_subscription_tests", () => {
 
     const [storage, bump] = await anchor.web3.PublicKey.findProgramAddressSync([SEEDS.PUSH_COMM_STORAGE], program.programId);
     const chainCluster = "devnet";
+    const programWalletPath = path.resolve(__dirname, "../accounts/program-keypair.json");
+    const programWalletKeypair = anchor.web3.Keypair.fromSecretKey(
+      new Uint8Array(JSON.parse(fs.readFileSync(programWalletPath, 'utf8')))
+    );
     const tx = await program.methods.initialize(
       pushAdmin.publicKey,
       chainCluster,
     ).accounts({
       storage: storage,
       signer: pushAdmin.publicKey,
+      program: programWalletKeypair.publicKey,
       systemProgram: anchor.web3.SystemProgram.programId,
-    }).signers([pushAdmin]).rpc();
+    }).signers([pushAdmin, programWalletKeypair]).rpc();
 
     // Fetch the initialized account and check initial values
     const accountData = await program.account.pushCommStorage.fetch(storage);

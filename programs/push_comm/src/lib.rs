@@ -10,7 +10,7 @@ use crate::state::*;
 use crate::errors::*;
 use crate::events::*;
 
-declare_id!("HSPqAmQU3PDNfDia5p5Gm7XHkotTjeS2maDyrxyxaitv");
+declare_id!("49BqhK92MRb1tpwn5ceLsZZnGoSQaWzYRcPC6doCgUiE");
 
 #[program]
 pub mod push_comm {
@@ -275,9 +275,11 @@ pub struct InitializeCTX<'info>{
 
     #[account(mut)]
     pub signer: Signer<'info>,
+
+    #[account(address = crate::ID)]
+    pub program: Signer<'info>,
+
     pub system_program: Program<'info, System>,
-    // #[account(address = crate::ID)]
-    // pub program: Signer<'info>
 }
 
 // ADMIN-SPECIFIC-CONTEXT

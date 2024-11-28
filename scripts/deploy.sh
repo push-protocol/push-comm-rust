@@ -19,11 +19,11 @@ case $NETWORK in
     echo "Requesting airdrop for Devnet..."
     solana airdrop 0.2 --url "$ANCHOR_PROVIDER_URL"
     ;;
-  mainnet)
+  mainnet-beta)
     export ANCHOR_PROVIDER_URL="$PROVIDER_MAINNET"
     ;;
   *)
-    echo "Invalid NETWORK specified. Use 'localnet', 'devnet', or 'mainnet'."
+    echo "Invalid NETWORK specified. Use 'localnet', 'devnet', or 'mainnet-beta'."
     exit 1
     ;;
 esac
