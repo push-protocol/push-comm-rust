@@ -10,7 +10,7 @@ use crate::state::*;
 use crate::errors::*;
 use crate::events::*;
 
-declare_id!("4paT684azMaEFar5otU4qpBh2Q9xwDN6MQfS2Yxn8Dh8");
+declare_id!("HSPqAmQU3PDNfDia5p5Gm7XHkotTjeS2maDyrxyxaitv");
 
 #[program]
 pub mod push_comm {
@@ -91,7 +91,11 @@ pub mod push_comm {
     pub fn verify_channel_alias(ctx: Context<AliasVerificationCTX>,
         channel_address: String
     ) -> Result<()> {
-        require!(channel_address.len() <= 64, PushCommError::InvalidArgument);
+        // ChannelAddress can only be a EVM address as per design
+        require!(
+            channel_address.len() == 42 && channel_address.starts_with("0x"),
+            PushCommError::InvalidArgument
+        );
 
         let storage = &mut ctx.accounts.storage;
 
@@ -272,6 +276,8 @@ pub struct InitializeCTX<'info>{
     #[account(mut)]
     pub signer: Signer<'info>,
     pub system_program: Program<'info, System>,
+    // #[account(address = crate::ID)]
+    // pub program: Signer<'info>
 }
 
 // ADMIN-SPECIFIC-CONTEXT
