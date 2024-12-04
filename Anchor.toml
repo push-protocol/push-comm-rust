@@ -12,7 +12,7 @@ url = "https://api.apr.dev"
 
 [provider]
 cluster = "http://127.0.0.1:8899"
-wallet = "/Users/mdzaryabafser/.config/solana/id.json"
+wallet = "~/.config/solana/id.json"
 
 [scripts]
 admin_actions_tests = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/admin_actions.test.ts"
