@@ -31,10 +31,6 @@ esac
 # Set the anchor wallet path
 export ANCHOR_WALLET="$ANCHOR_WALLET"
 
-# Build the program
-echo "Building the program..."
-anchor build
-
 # Deploy the program with the correct wallet and provider URL
 echo "Deploying a new program..."
 anchor deploy --provider.cluster "$ANCHOR_PROVIDER_URL" --provider.wallet "$ANCHOR_WALLET"
