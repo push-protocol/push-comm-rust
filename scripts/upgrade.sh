@@ -28,7 +28,7 @@ esac
 
 # Build the program
 echo "Building the program..."
-anchor build
+solana-verify build
 
 # Upgrade the program with the correct wallet and provider URL
 echo "Upgrading the program on $NETWORK..."

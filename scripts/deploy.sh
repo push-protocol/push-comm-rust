@@ -28,6 +28,9 @@ case $NETWORK in
     ;;
 esac
 
+echo "Building the program..."
+solana-verify build
+
 # Set the anchor wallet path
 export ANCHOR_WALLET="$ANCHOR_WALLET"
 
